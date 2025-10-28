@@ -8,16 +8,21 @@
 <body>
 <header>
     <nav>
-        <a href="index.html">Home</a>
-        <a href="login.html">Login</a>
-        <a href="register.html">Register</a>
-        <a href="account.html">Account</a>
-        <a href="kitchen.html">Kitchen</a>
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('auth.login') }}">Login</a>
+        <a href="{{ url_for('auth.register') }}">Register</a>
     </nav>
 </header>
 <main class="container">
     <h2>Register</h2>
-    <form>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <form method="POST" action="{{ url_for('auth.register') }}">
         <label for="username">Username:</label>
         <input type="text" id="username" name="username" required>
 
@@ -32,6 +37,7 @@
 
         <button type="submit">Register</button>
     </form>
+    <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a></p>
 </main>
 <footer>
     <p>&copy; 2025 Kitchen Management Suite</p>
