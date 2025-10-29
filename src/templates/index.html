@@ -8,21 +8,26 @@
 <body>
 <header>
     <nav>
-        <!-- Flask will handle routes here -->
-        <a href="index.html">Home</a>
-        <a href="login.html">Login</a>
-        <a href="register.html">Register</a>
+        <a href="{{ url_for('index') }}">Home</a>
         <a href="account.html">Account</a>
         <a href="kitchen.html">Kitchen</a>
+        <a href="{{ url_for('auth.logout') }}">Logout</a>
     </nav>
 </header>
 <main class="container">
-    <h2>Home</h2>
-    <p>This is the home page.</p>
+    <h2>Welcome, {{ session.username }}!</h2>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <p>You are logged in to the Kitchen Management Suite.</p>
+    <p>Use the navigation menu to access your kitchen and account settings.</p>
 </main>
 <footer>
     <p>&copy; 2025 Kitchen Management Suite</p>
 </footer>
 </body>
 </html>
-

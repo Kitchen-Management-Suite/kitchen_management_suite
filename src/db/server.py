@@ -46,7 +46,7 @@ def init_database():
         # import all of the tables
         from db.schema import Adds, Authors, Holds, Household, Item, Member, Pantry, Recipe, Role, User, UserNutrition, UserProfile
         # create all of the tables
-        Base.metadata.create_all(bind=engine)
+        Base.metadata.create_all(bind=engine, checkfirst=True)
         print(f"\n\n----------- Connection successful!")
         print(f" * Connected to database: {DB_NAME}")
         print(f" * Database tables created successfully!")

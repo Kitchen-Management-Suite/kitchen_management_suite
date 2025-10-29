@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>KMS | Home</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <header>
+      <nav>
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('auth.login') }}">Login</a>
+        <a href="{{ url_for('auth.register') }}">Register</a>
+      </nav>
+    </header>
+    <main class="container">
+      <h2>Welcome to Kitchen Management Suite</h2>
+      <p>You are currently logged out.</p>
+      <p>Please register or login to access the full features.</p>
+      <a href="{{ url_for('auth.register') }}">
+        <button type="button">Register Now</button>
+      </a>
+    </main>
+    <footer>
+      <p>&copy; 2025 Kitchen Management Suite</p>
+    </footer>
+  </body>
+</html>
