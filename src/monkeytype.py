@@ -25,6 +25,7 @@ import json
 
 from faker import Faker
 from sqlalchemy.exc import IntegrityError
+from werkzeug.security import generate_password_hash
 
 from db.server import get_session, init_database
 from db.schema import (
@@ -206,7 +207,7 @@ class UserGenerator:
             Username=username,
             Email=email,
             DateOfBirth=dob,
-            Password="hashed_password_123"  # In production, this would be properly hashed
+            Password=generate_password_hash("password123")  # In production, this would be properly hashed
         )
         
         return user
