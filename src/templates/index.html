@@ -15,7 +15,7 @@
     </nav>
 </header>
 <main class="container">
-    <h2>Welcome, {{ session.username }}!</h2>
+    <div id="greeting-root"></div>
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -23,11 +23,34 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-    <p>You are logged in to the Kitchen Management Suite.</p>
-    <p>Use the navigation menu to access your kitchen and account settings.</p>
+    <div id="quick-actions-root"></div>
 </main>
 <footer>
     <p>&copy; 2025 Kitchen Management Suite</p>
 </footer>
+
+    <script type="module">
+    import { h, render } from "{{ url_for('static', filename='hook.js') }}";
+
+    function QuickActions() {
+        const actions = [
+            { title: "Account", link: "account.html" }
+        ];
+
+        return h("div", null,
+            h("h3", null, "Quick Actions"),
+            h("div", { class: "quick-actions" },
+                ...actions.map(action => 
+                    h("a", { href: action.link, class: "action-card" },
+                        h("div", { class: "action-title" }, action.title)
+                    )
+                )
+            )
+        );
+    }
+
+    document.getElementById("greeting-root").innerHTML = '<h2>Welcome, {{ session.username }}!</h2>';
+    render(h(QuickActions), document.getElementById("quick-actions-root"));
+</script>
 </body>
 </html>

@@ -22,18 +22,25 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-    <form method="POST" action="{{ url_for('auth.register') }}">
+    <form method="POST" action="{{ url_for('auth.register') }}" id="register-form">
         <label for="username">Username:</label>
         <input type="text" id="username" name="username" required>
+        <div class="validation-error" id="username-error" style="display: none;"></div>
+        <div class="validation-success" id="username-success" style="display: none;">✓ Username looks good</div>
 
         <label for="email">Email:</label>
         <input type="email" id="email" name="email" required>
+        <div class="validation-error" id="email-error" style="display: none;"></div>
+        <div class="validation-success" id="email-success" style="display: none;">✓ Valid email</div>
 
         <label for="password">Password:</label>
         <input type="password" id="password" name="password" required>
+        <div class="validation-error" id="password-error" style="display: none;"></div>
+        <div class="password-strength" id="password-strength" style="display: none;"></div>
 
         <label for="dob">Date of Birth:</label>
         <input type="date" id="dob" name="dob" required>
+        <div class="validation-error" id="dob-error" style="display: none;"></div>
 
         <button type="submit">Register</button>
     </form>
@@ -42,5 +49,99 @@
 <footer>
     <p>&copy; 2025 Kitchen Management Suite</p>
 </footer>
+
+<script type="module">
+  import { validateEmail, calculatePasswordStrength, validateAge, showError, hideError, showSuccess } from "{{ url_for('static', filename='validation.js') }}";
+
+  const form = document.getElementById('register-form');
+  const usernameInput = document.getElementById('username');
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
+  const dobInput = document.getElementById('dob');
+
+  usernameInput.addEventListener('input', () => {
+    hideError('username');
+    if (usernameInput.value.length >= 3) {
+      showSuccess('username');
+    } else {
+      const successEl = document.getElementById('username-success');
+      if (successEl) successEl.style.display = 'none';
+      usernameInput.classList.remove('input-success');
+    }
+  });
+
+  emailInput.addEventListener('input', () => {
+    hideError('email');
+    if (emailInput.value && validateEmail(emailInput.value)) {
+      showSuccess('email');
+    } else {
+      const successEl = document.getElementById('email-success');
+      if (successEl) successEl.style.display = 'none';
+      emailInput.classList.remove('input-success');
+    }
+  });
+
+  passwordInput.addEventListener('input', () => {
+    hideError('password');
+    const strengthEl = document.getElementById('password-strength');
+    if (passwordInput.value) {
+      const strength = calculatePasswordStrength(passwordInput.value);
+      strengthEl.textContent = `Password strength: ${strength}`;
+      strengthEl.className = 'password-strength';
+      strengthEl.classList.add(`strength-${strength}`);
+      strengthEl.style.display = 'block';
+    } else {
+      strengthEl.style.display = 'none';
+    }
+  });
+
+  dobInput.addEventListener('input', () => hideError('dob'));
+
+  form.addEventListener('submit', (e) => {
+    let isValid = true;
+
+    hideError('username');
+    hideError('email');
+    hideError('password');
+    hideError('dob');
+
+    if (!usernameInput.value) {
+      showError('username', 'Username is required');
+      isValid = false;
+    } else if (usernameInput.value.length < 3) {
+      showError('username', 'Username must be at least 3 characters');
+      isValid = false;
+    }
+
+    if (!emailInput.value) {
+      showError('email', 'Email is required');
+      isValid = false;
+    } else if (!validateEmail(emailInput.value)) {
+      showError('email', 'Please enter a valid email address');
+      isValid = false;
+    }
+
+    if (!passwordInput.value) {
+      showError('password', 'Password is required');
+      isValid = false;
+    } else if (passwordInput.value.length < 6) {
+      showError('password', 'Password must be at least 6 characters');
+      isValid = false;
+    }
+
+    if (!dobInput.value) {
+      showError('dob', 'Date of birth is required');
+      isValid = false;
+    } else {
+      const age = validateAge(dobInput.value);
+      if (age < 13) {
+        showError('dob', 'You must be at least 13 years old to register');
+        isValid = false;
+      }
+    }
+
+    if (!isValid) e.preventDefault();
+  });
+</script>
 </body>
 </html>

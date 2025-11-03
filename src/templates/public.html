@@ -7,6 +7,10 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='style.css') }}"
     />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='public.css') }}"
+    />
   </head>
   <body>
     <header>
@@ -17,15 +21,48 @@
       </nav>
     </header>
     <main class="container">
-      <h2>Welcome to Kitchen Management Suite</h2>
-      <p>You are currently logged out.</p>
-      <p>Please register or login to access the full features.</p>
-      <a href="{{ url_for('auth.register') }}">
-        <button type="button">Register Now</button>
-      </a>
+      <div class="hero">
+        <h1>Kitchen Management Suite</h1>
+        <p>The Final Solution for All Your Kitchen Needs</p>
+
+        <div class="cta-section">
+          <a href="{{ url_for('auth.register') }}" class="btn-primary"
+            >Get Started</a
+          >
+        </div>
+        <div class="login-link">
+          Already have an account?
+          <a href="{{ url_for('auth.login') }}">Log in</a>
+        </div>
+      </div>
+
+      <div id="features-root"></div>
     </main>
     <footer>
       <p>&copy; 2025 Kitchen Management Suite</p>
     </footer>
+
+    <script type="module">
+      import { h, render } from "{{ url_for('static', filename='hook.js') }}";
+
+      function Features() {
+        const features = [
+          { title: "Household Management" },
+          { title: "Pantry Tracking" },
+          { title: "Recipe Storage" },
+          { title: "Diet Logging" },
+        ];
+
+        return h(
+          "div",
+          { class: "features" },
+          ...features.map((f) =>
+            h("div", { class: "feature" }, h("h3", null, f.title)),
+          ),
+        );
+      }
+
+      render(h(Features), document.getElementById("features-root"));
+    </script>
   </body>
 </html>
