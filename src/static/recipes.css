@@ -213,12 +213,42 @@
 
 .recipe-section {
     margin: 2rem 0;
+    position: relative;
 }
 
-.recipe-section h3 {
+.recipe-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 1rem;
     padding-bottom: 0.5rem;
     border-bottom: 2px solid #ddd;
+}
+
+.recipe-section-header h3 {
+    margin: 0;
+}
+
+.view-all-btn {
+    padding: 0.35rem 0.5rem;
+    background: transparent;
+    color: #888;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-weight: 500;
+    justify-content: flex-end;
+}
+
+.view-all-btn:hover {
+    background: transparent;
+    color: #333;
 }
 
 .carousel {
@@ -227,6 +257,7 @@
     gap: 1.5rem;
     padding: 1rem 0;
     scroll-behavior: smooth;
+    transition: all 0.3s ease;
 }
 
 .carousel::-webkit-scrollbar {
@@ -247,6 +278,27 @@
     background: #555;
 }
 
+.carousel.expanded {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+    overflow-x: visible;
+    padding: 1rem 0;
+    max-width: 100%;
+}
+
+@media (max-width: 1024px) {
+    .carousel.expanded {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .carousel.expanded {
+        grid-template-columns: 1fr;
+    }
+}
+
 .recipe-card {
     min-width: 250px;
     max-width: 250px;
@@ -259,6 +311,14 @@
     text-decoration: none;
     color: black;
     display: block;
+    box-sizing: border-box;
+}
+
+.carousel.expanded .recipe-card {
+    max-width: none;
+    min-width: 0;
+    width: 100%;
+    height: 100%;
 }
 
 .recipe-card:hover {
@@ -318,7 +378,7 @@
 
 /* Nutrition Facts Label Styling */
 .nutrition-facts-container {
-    max-width: 600px;
+    max-width: 800px;
     margin: 3rem auto;
     padding: 0;
 }
