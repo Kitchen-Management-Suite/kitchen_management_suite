@@ -58,6 +58,13 @@
                 <span>{{ recipe.RecipeBody.course }}</span>
             </div>
             {% endif %}
+
+            {% if recipe.RecipeBody.nutriments_per_serving %}
+            <div class="meta-item">
+                <label>Calories/Serving</label>
+                <span>{{ recipe.RecipeBody.nutriments_per_serving['energy-kcal']|round|int }} kcal</span>
+            </div>
+            {% endif %}
         {% endif %}
     </div>
 </div>
@@ -66,15 +73,17 @@
     <!-- Ingredients -->
     <div class="ingredients-section">
         <h3>Ingredients</h3>
-        <!-- NEED TO FIX THIS LOGIC -->
+        
         {% if pantry_items %}
-        {% set available_count = 0 %}
-        {% set total_count = 0 %}
+        {% set available_count = namespace(value=0) %}
+        {% set total_count = namespace(value=0) %}
         {% if recipe.RecipeBody and recipe.RecipeBody.ingredients %}
             {% for ingredient_key, ingredient_data in recipe.RecipeBody.ingredients.items() %}
-                {% set total_count = total_count + 1 %}
-                {% if ingredient_key.lower() in pantry_items %}
-                    {% set available_count = available_count + 1 %}
+                {% set total_count.value = total_count.value + 1 %}
+                {# Get ingredient name from the ID or key, replacing dashes/underscores with spaces #}
+                {% set ingredient_name = ingredient_data.id.replace('-', ' ').replace('_', ' ') if ingredient_data.id else ingredient_key.replace('-', ' ').replace('_', ' ') %}
+                {% if ingredient_name.lower() in pantry_items %}
+                    {% set available_count.value = available_count.value + 1 %}
                 {% endif %}
             {% endfor %}
         {% endif %}
@@ -84,11 +93,11 @@
             <div class="pantry-stats">
                 <div class="stat-item">
                     <span class="stat-icon icon-available">✓</span>
-                    <span>{{ available_count }} available</span>
+                    <span>{{ available_count.value }} available</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-icon icon-unavailable">✗</span>
-                    <span>{{ total_count - available_count }} needed</span>
+                    <span>{{ total_count.value - available_count.value }} needed</span>
                 </div>
             </div>
         </div>
@@ -98,15 +107,17 @@
         <ul class="ingredients-list">
             {% for ingredient_key, ingredient_data in recipe.RecipeBody.ingredients.items() %}
             <li>
-                <span class="ingredient-name">{{ ingredient_key }}</span>
+                {# Display ingredient name from ID or key #}
+                {% set ingredient_name = ingredient_data.id.replace('-', ' ').replace('_', ' ') if ingredient_data.id else ingredient_key.replace('-', ' ').replace('_', ' ') %}
+                <span class="ingredient-name">{{ ingredient_name|title }}</span>
                 <span class="ingredient-details">
                     {% if ingredient_data.amount %}{{ ingredient_data.amount }}{% endif %}
                     {% if ingredient_data.unit %}{{ ingredient_data.unit }}{% endif %}
                 </span>
                 {% if pantry_items %}
-                    {% if ingredient_key.lower() in pantry_items %}
+                    {% if ingredient_name.lower() in pantry_items %}
                     <span class="ingredient-status status-available">
-                        ✓ ({{ pantry_items[ingredient_key.lower()] }})
+                        ✓ ({{ pantry_items[ingredient_name.lower()] }})
                     </span>
                     {% else %}
                     <span class="ingredient-status status-unavailable">
@@ -136,4 +147,59 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Nutrition Facts Label -->
+{% if recipe.RecipeBody and recipe.RecipeBody.nutriments_per_serving %}
+<div class="nutrition-facts-container">
+    <div class="nutrition-label">
+        <h3 class="nutrition-title">Nutrition Facts</h3>
+        <div class="serving-size">
+            Serving Size: 1 serving
+            {% if recipe.RecipeBody.serves %}
+            <br>Servings Per Recipe: {{ recipe.RecipeBody.serves }}
+            {% endif %}
+        </div>
+        
+        <div class="calories-section">
+            <div class="calories-row">
+                <span class="calories-label">Calories</span>
+                <span class="calories-value">{{ recipe.RecipeBody.nutriments_per_serving['energy-kcal']|round|int }}</span>
+            </div>
+        </div>
+        
+        <div class="daily-value-header">
+            % Daily Value*
+        </div>
+        
+        <div class="nutrient-row major">
+            <div class="nutrient-name"><strong>Total Fat</strong> {{ recipe.RecipeBody.nutriments_per_serving.fat|round(1) }}g</div>
+            <div class="nutrient-dv"><strong>{{ ((recipe.RecipeBody.nutriments_per_serving.fat / 78) * 100)|round|int }}%</strong></div>
+        </div>
+        
+        <div class="nutrient-row">
+            <div class="nutrient-name"><strong>Total Carbohydrate</strong> {{ recipe.RecipeBody.nutriments_per_serving.carbohydrates|round(1) }}g</div>
+            <div class="nutrient-dv"><strong>{{ ((recipe.RecipeBody.nutriments_per_serving.carbohydrates / 275) * 100)|round|int }}%</strong></div>
+        </div>
+        
+        <div class="nutrient-row indent">
+            <div class="nutrient-name">Dietary Fiber {{ recipe.RecipeBody.nutriments_per_serving.fiber|round(1) }}g</div>
+            <div class="nutrient-dv">{{ ((recipe.RecipeBody.nutriments_per_serving.fiber / 28) * 100)|round|int }}%</div>
+        </div>
+        
+        <div class="nutrient-row indent">
+            <div class="nutrient-name">Total Sugars {{ recipe.RecipeBody.nutriments_per_serving.sugars|round(1) }}g</div>
+            <div class="nutrient-dv"></div>
+        </div>
+        
+        <div class="nutrient-row major">
+            <div class="nutrient-name"><strong>Protein</strong> {{ recipe.RecipeBody.nutriments_per_serving.proteins|round(1) }}g</div>
+            <div class="nutrient-dv"><strong>{{ ((recipe.RecipeBody.nutriments_per_serving.proteins / 50) * 100)|round|int }}%</strong></div>
+        </div>
+        
+        <div class="nutrition-footnote">
+            * Percent Daily Values are based on a 2,000 calorie diet.
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}

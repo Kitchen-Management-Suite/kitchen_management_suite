@@ -211,7 +211,7 @@
     background: #e0e0e0;
 }
 
-    .recipe-section {
+.recipe-section {
     margin: 2rem 0;
 }
 
@@ -314,4 +314,106 @@
 
 .household-header h2 {
     margin: 0;
+}
+
+/* Nutrition Facts Label Styling */
+.nutrition-facts-container {
+    max-width: 600px;
+    margin: 3rem auto;
+    padding: 0;
+}
+
+.nutrition-label {
+    border: 2px solid black;
+    background: white;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    padding: 0.5rem;
+}
+
+.nutrition-title {
+    font-size: 2.5rem;
+    font-weight: 900;
+    margin: 0;
+    padding: 0.25rem 0;
+    border-bottom: 10px solid black;
+    line-height: 1;
+}
+
+.serving-size {
+    padding: 0.5rem 0;
+    border-bottom: 5px solid black;
+    font-size: 0.875rem;
+    font-weight: bold;
+}
+
+.calories-section {
+    border-bottom: 10px solid black;
+    padding: 0.25rem 0;
+}
+
+.calories-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0.25rem 0;
+}
+
+.calories-label {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.calories-value {
+    font-size: 2.5rem;
+    font-weight: 900;
+}
+
+.daily-value-header {
+    text-align: right;
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 0.25rem 0;
+    border-bottom: 4px solid black;
+}
+
+.nutrient-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid #999;
+    font-size: 0.875rem;
+}
+
+.nutrient-row.major {
+    border-bottom: 5px solid black;
+    padding: 0.4rem 0;
+}
+
+.nutrient-row.indent .nutrient-name {
+    padding-left: 1.5rem;
+}
+
+.nutrient-name {
+    flex: 1;
+}
+
+.nutrient-dv {
+    font-weight: bold;
+    min-width: 50px;
+    text-align: right;
+}
+
+.nutrition-footnote {
+    padding: 0.5rem 0;
+    font-size: 0.7rem;
+    border-top: 4px solid black;
+    margin-top: 0.25rem;
+}
+
+@media (max-width: 768px) {
+    .nutrition-facts-container {
+        max-width: 100%;
+        margin: 2rem 0;
+    }
 }
