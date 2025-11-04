@@ -490,17 +490,29 @@ class RecipeManager:
             session.add(recipe)
             session.flush()
             recipes.append(recipe)
-        
-        # Create custom recipes (15-25)
-        num_custom = random.randint(15, 25)
+
+        # Create custom recipes (15-50)
+        num_custom = random.randint(15, 50)
         for _ in range(num_custom):
             recipe = Recipe(
                 RecipeName=fake.catch_phrase(),
                 RecipeBody={
-                    'ingredients': [fake.word() for _ in range(random.randint(3, 8))],
-                    'instructions': [fake.sentence() for _ in range(random.randint(3, 7))],
-                    'prep_time': f"{random.randint(10, 60)} minutes",
-                    'servings': random.randint(2, 8)
+                    "name": recipe.RecipeName,
+                    "author": fake.name(),
+                    "created": str(datetime.date.today() - datetime.timedelta(days=random.randint(0, 365))),
+                    "cuisine": random.choice(["Italian", "Mexican", "Chinese", "Indian", "American", "Mediterranean", "French", "Japanese"]),
+                    "course": random.choice(["appetizer", "main", "dessert", "snack", "beverage"]),
+                    "preptime": random.randint(10, 90),
+                    "cooktime": random.randint(10, 120),
+                    "serves": random.randint(1, 8),
+                    "ingredients": {
+                        f"ingredient{i}": {
+                            "id": fake.word(),
+                            "amount": round(random.uniform(0.5, 5.0), 2),
+                            "unit": random.choice(["cup", "tablespoon", "teaspoon", "grams", "pieces"])
+                        } for i in range(1, random.randint(4, 10))
+                    },
+                    "instructions": [fake.sentence() for _ in range(random.randint(4, 10))]
                 },
                 Source='custom',
                 IsGlobal=False

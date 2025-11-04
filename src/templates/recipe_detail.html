@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}KMS | {{ recipe.RecipeName }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='recipes.css') }}">
+{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('recipes.recipes') }}" class="back-button">← Back to Recipes</a>
+
+<div class="recipe-header">
+    <h2>{{ recipe.RecipeName }}</h2>
+    <div>
+        <span class="recipe-badge {% if recipe.IsGlobal %}badge-global{% else %}badge-custom{% endif %}">
+            {{ recipe.Source|upper }}
+        </span>
+        {% if recipe.IsGlobal %}
+        <span class="recipe-badge badge-global">Global Recipe</span>
+        {% else %}
+        <span class="recipe-badge badge-custom">Custom Recipe</span>
+        {% endif %}
+    </div>
+
+    <div class="recipe-meta-info">
+        {% if recipe.RecipeBody %}
+            {% if recipe.RecipeBody.serves %}
+            <div class="meta-item">
+                <label>Servings</label>
+                <span>{{ recipe.RecipeBody.serves }}</span>
+            </div>
+            {% endif %}
+
+            {% if recipe.RecipeBody.preptime %}
+            <div class="meta-item">
+                <label>Prep Time</label>
+                <span>{{ recipe.RecipeBody.preptime }} min</span>
+            </div>
+            {% endif %}
+
+            {% if recipe.RecipeBody.cooktime %}
+            <div class="meta-item">
+                <label>Cook Time</label>
+                <span>{{ recipe.RecipeBody.cooktime }} min</span>
+            </div>
+            {% endif %}
+
+            {% if recipe.RecipeBody.cuisine %}
+            <div class="meta-item">
+                <label>Cuisine</label>
+                <span>{{ recipe.RecipeBody.cuisine }}</span>
+            </div>
+            {% endif %}
+
+            {% if recipe.RecipeBody.course %}
+            <div class="meta-item">
+                <label>Course</label>
+                <span>{{ recipe.RecipeBody.course }}</span>
+            </div>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<div class="recipe-content">
+    <!-- Ingredients -->
+    <div class="ingredients-section">
+        <h3>Ingredients</h3>
+        <!-- NEED TO FIX THIS LOGIC -->
+        {% if pantry_items %}
+        {% set available_count = 0 %}
+        {% set total_count = 0 %}
+        {% if recipe.RecipeBody and recipe.RecipeBody.ingredients %}
+            {% for ingredient_key, ingredient_data in recipe.RecipeBody.ingredients.items() %}
+                {% set total_count = total_count + 1 %}
+                {% if ingredient_key.lower() in pantry_items %}
+                    {% set available_count = available_count + 1 %}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        
+        <div class="pantry-info">
+            <h4>Pantry Availability</h4>
+            <div class="pantry-stats">
+                <div class="stat-item">
+                    <span class="stat-icon icon-available">✓</span>
+                    <span>{{ available_count }} available</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon icon-unavailable">✗</span>
+                    <span>{{ total_count - available_count }} needed</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if recipe.RecipeBody and recipe.RecipeBody.ingredients %}
+        <ul class="ingredients-list">
+            {% for ingredient_key, ingredient_data in recipe.RecipeBody.ingredients.items() %}
+            <li>
+                <span class="ingredient-name">{{ ingredient_key }}</span>
+                <span class="ingredient-details">
+                    {% if ingredient_data.amount %}{{ ingredient_data.amount }}{% endif %}
+                    {% if ingredient_data.unit %}{{ ingredient_data.unit }}{% endif %}
+                </span>
+                {% if pantry_items %}
+                    {% if ingredient_key.lower() in pantry_items %}
+                    <span class="ingredient-status status-available">
+                        ✓ ({{ pantry_items[ingredient_key.lower()] }})
+                    </span>
+                    {% else %}
+                    <span class="ingredient-status status-unavailable">
+                        ✗
+                    </span>
+                    {% endif %}
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p>No ingredients listed.</p>
+        {% endif %}
+    </div>
+
+    <!-- Instructions -->
+    <div class="instructions-section">
+        <h3>Instructions</h3>
+        {% if recipe.RecipeBody and recipe.RecipeBody.instructions %}
+        <ol class="instructions-list">
+            {% for instruction in recipe.RecipeBody.instructions %}
+            <li>{{ instruction }}</li>
+            {% endfor %}
+        </ol>
+        {% else %}
+        <p>No instructions available.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

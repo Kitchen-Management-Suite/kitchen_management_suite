@@ -1,40 +1,21 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>KMS | Home</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-<header>
-    <nav>
-        <a href="{{ url_for('index') }}">Home</a>
-        <a href="account.html">Account</a>
-        <a href="kitchen.html">Kitchen</a>
-        <a href="{{ url_for('auth.logout') }}">Logout</a>
-    </nav>
-</header>
-<main class="container">
-    <div id="greeting-root"></div>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    <div id="quick-actions-root"></div>
-</main>
-<footer>
-    <p>&copy; 2025 Kitchen Management Suite</p>
-</footer>
+{% extends "base.html" %}
 
-    <script type="module">
+{% block title %}KMS | Home{% endblock %}
+
+{% block content %}
+<div id="greeting-root"></div>
+<div id="quick-actions-root"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
     import { h, render } from "{{ url_for('static', filename='hook.js') }}";
 
     function QuickActions() {
         const actions = [
-            { title: "Account", link: "account.html" }
+            { title: "Pantry", link: "/pantry" },
+            { title: "Recipes", link: "/recipes" },
+            { title: "Account", link: "/account" }
         ];
 
         return h("div", null,
@@ -49,8 +30,10 @@
         );
     }
 
+    // Render greeting
     document.getElementById("greeting-root").innerHTML = '<h2>Welcome, {{ session.username }}!</h2>';
+    
+    // Render quick actions
     render(h(QuickActions), document.getElementById("quick-actions-root"));
 </script>
-</body>
-</html>
+{% endblock %}

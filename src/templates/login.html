@@ -1,78 +1,60 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>KMS | Login</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}"
-    />
-  </head>
-  <body>
-    <header>
-      <nav>
-        <a href="{{ url_for('index') }}">Home</a>
-        <a href="{{ url_for('auth.login') }}">Login</a>
-        <a href="{{ url_for('auth.register') }}">Register</a>
-      </nav>
-    </header>
-    <main class="container">
-      <h2>Login</h2>
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          {% for category, message in messages %}
-            <div class="alert alert-{{ category }}">{{ message }}</div>
-          {% endfor %}
-        {% endif %}
-      {% endwith %}
-      <form method="POST" action="{{ url_for('auth.login') }}" id="login-form">
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required />
-        <div class="validation-error" id="email-error" style="display: none;"></div>
+{% extends "base.html" %}
+{% block title %}KMS | Login{% endblock %}
 
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required />
-        <div class="validation-error" id="password-error" style="display: none;"></div>
+{% block content %}
+<h2>Login</h2>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+<form method="POST" action="{{ url_for('auth.login') }}" id="login-form">
+  <label for="email">Email:</label>
+  <input type="email" id="email" name="email" required />
+  <div class="validation-error" id="email-error" style="display: none;"></div>
 
-        <button type="submit">Login</button>
-      </form>
-      <p>Don't have an account? <a href="{{ url_for('auth.register') }}">Register here</a></p>
-    </main>
-    <footer>
-      <p>&copy; 2025 Kitchen Management Suite</p>
-    </footer>
+  <label for="password">Password:</label>
+  <input type="password" id="password" name="password" required />
+  <div class="validation-error" id="password-error" style="display: none;"></div>
 
-    <script type="module">
-      import { validateEmail, showError, hideError } from "{{ url_for('static', filename='validation.js') }}";
+  <button type="submit">Login</button>
+</form>
+<p>Don't have an account? <a href="{{ url_for('auth.register') }}">Register here</a></p>
+{% endblock %}
 
-      const form = document.getElementById('login-form');
-      const emailInput = document.getElementById('email');
-      const passwordInput = document.getElementById('password');
+{% block extra_js %}
+<script type="module">
+  import { validateEmail, showError, hideError } from "{{ url_for('static', filename='validation.js') }}";
 
-      emailInput.addEventListener('input', () => hideError('email'));
-      passwordInput.addEventListener('input', () => hideError('password'));
+  const form = document.getElementById('login-form');
+  const emailInput = document.getElementById('email');
+  const passwordInput = document.getElementById('password');
 
-      form.addEventListener('submit', (e) => {
-        let isValid = true;
+  emailInput.addEventListener('input', () => hideError('email'));
+  passwordInput.addEventListener('input', () => hideError('password'));
 
-        hideError('email');
-        hideError('password');
+  form.addEventListener('submit', (e) => {
+    let isValid = true;
 
-        if (!emailInput.value) {
-          showError('email', 'Email is required');
-          isValid = false;
-        } else if (!validateEmail(emailInput.value)) {
-          showError('email', 'Please enter a valid email address');
-          isValid = false;
-        }
+    hideError('email');
+    hideError('password');
 
-        if (!passwordInput.value) {
-          showError('password', 'Password is required');
-          isValid = false;
-        }
+    if (!emailInput.value) {
+      showError('email', 'Email is required');
+      isValid = false;
+    } else if (!validateEmail(emailInput.value)) {
+      showError('email', 'Please enter a valid email address');
+      isValid = false;
+    }
 
-        if (!isValid) e.preventDefault();
-      });
-    </script>
-  </body>
-</html>
+    if (!passwordInput.value) {
+      showError('password', 'Password is required');
+      isValid = false;
+    }
+
+    if (!isValid) e.preventDefault();
+  });
+</script>
+{% endblock %}

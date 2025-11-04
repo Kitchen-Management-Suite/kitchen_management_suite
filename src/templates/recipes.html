@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}KMS | Recipes{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='recipes.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="household-header">
+    <h2>Recipes{% if current_household %} - {{ current_household.HouseholdName }}{% endif %}</h2>
+</div>
+
+<!-- User Authored Recipes -->
+<div class="recipe-section">
+    <h3>Your Recipes</h3>
+    {% if user_recipes %}
+    <div class="carousel">
+        {% for recipe in user_recipes %}
+        <a href="{{ url_for('recipes.recipe_detail', recipe_id=recipe.RecipeID) }}" class="recipe-card">
+            <h4>{{ recipe.RecipeName }}</h4>
+            <div class="recipe-meta">
+                {% if recipe.RecipeBody and recipe.RecipeBody.serves %}
+                Serves: {{ recipe.RecipeBody.serves }}
+                {% endif %}
+            </div>
+            <div class="recipe-meta">
+                {% if recipe.RecipeBody and recipe.RecipeBody.preptime %}
+                Prep: {{ recipe.RecipeBody.preptime }} min
+                {% endif %}
+                {% if recipe.RecipeBody and recipe.RecipeBody.cooktime %}
+                | Cook: {{ recipe.RecipeBody.cooktime }} min
+                {% endif %}
+            </div>
+            <span class="recipe-source {% if recipe.IsGlobal %}global{% else %}custom{% endif %}">
+                {{ recipe.Source|upper }}
+            </span>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-carousel">
+        <!-- URGENT NEED TO CREATE AND CONNECT TO PROPER FORM -->
+        <button>Create New Recipe</button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Household Recipes -->
+<div class="recipe-section">
+    <h3>Household Recipes</h3>
+    {% if household_recipes %}
+    <div class="carousel">
+        {% for recipe in household_recipes %}
+        <a href="{{ url_for('recipes.recipe_detail', recipe_id=recipe.RecipeID) }}" class="recipe-card">
+            <h4>{{ recipe.RecipeName }}</h4>
+            <div class="recipe-meta">
+                {% if recipe.RecipeBody and recipe.RecipeBody.serves %}
+                Serves: {{ recipe.RecipeBody.serves }}
+                {% endif %}
+            </div>
+            <div class="recipe-meta">
+                {% if recipe.RecipeBody and recipe.RecipeBody.preptime %}
+                Prep: {{ recipe.RecipeBody.preptime }} min
+                {% endif %}
+                {% if recipe.RecipeBody and recipe.RecipeBody.cooktime %}
+                | Cook: {{ recipe.RecipeBody.cooktime }} min
+                {% endif %}
+            </div>
+            <span class="recipe-source {% if recipe.IsGlobal %}global{% else %}custom{% endif %}">
+                {{ recipe.Source|upper }}
+            </span>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-carousel">
+        No recipes saved in this household yet. Browse recommended recipes below!
+    </div>
+    {% endif %}
+</div>
+
+<!-- Recommended Recipes -->
+<div class="recipe-section">
+    <h3>Recommended Recipes</h3>
+    {% if recommended_recipes %}
+    <div class="carousel">
+        {% for recipe in recommended_recipes %}
+        <a href="{{ url_for('recipes.recipe_detail', recipe_id=recipe.RecipeID) }}" class="recipe-card">
+            <h4>{{ recipe.RecipeName }}</h4>
+            <div class="recipe-meta">
+                {% if recipe.RecipeBody and recipe.RecipeBody.serves %}
+                Serves: {{ recipe.RecipeBody.serves }}
+                {% endif %}
+            </div>
+            <div class="recipe-meta">
+                {% if recipe.RecipeBody and recipe.RecipeBody.preptime %}
+                Prep: {{ recipe.RecipeBody.preptime }} min
+                {% endif %}
+                {% if recipe.RecipeBody and recipe.RecipeBody.cooktime %}
+                | Cook: {{ recipe.RecipeBody.cooktime }} min
+                {% endif %}
+            </div>
+            <span class="recipe-source global">
+                {{ recipe.Source|upper }}
+            </span>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-carousel">
+        No recommendations available at this time.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
