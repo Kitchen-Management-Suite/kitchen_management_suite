@@ -1,39 +1,3 @@
-<<<<<<< HEAD
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>KMS | Home</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-<header>
-    <nav>
-        <a href="{{ url_for('index') }}">Home</a>
-        <a href="account.html">Account</a>
-        <a href="kitchen">Kitchen</a>
-        <a href = "calorieTracking"> Track Calories </a>
-        <a href="{{ url_for('auth.logout') }}">Logout</a>
-    </nav>
-</header>
-<main class="container">
-    <h2>Welcome, {{ session.username }}!</h2>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    <p>You are logged in to the Kitchen Management Suite.</p>
-    <p>Use the navigation menu to access your kitchen and account settings.</p>
-</main>
-<footer>
-    <p>&copy; 2025 Kitchen Management Suite</p>
-</footer>
-</body>
-</html>
-=======
 {% extends "base.html" %}
 
 {% block title %}KMS | Home{% endblock %}
@@ -73,4 +37,3 @@
     render(h(QuickActions), document.getElementById("quick-actions-root"));
 </script>
 {% endblock %}
->>>>>>> main

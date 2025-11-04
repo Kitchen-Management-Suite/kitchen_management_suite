@@ -18,11 +18,7 @@ Outputs:
 """
 
 import os
-<<<<<<< HEAD
-from flask import Flask, render_template, session, flash
-=======
 from flask import Flask, render_template, session, redirect, url_for, flash, request
->>>>>>> main
 from dotenv import load_dotenv
 
 # load environment variables
