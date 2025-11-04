@@ -1,55 +1,36 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>KMS | Register</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-<header>
-    <nav>
-        <a href="{{ url_for('index') }}">Home</a>
-        <a href="{{ url_for('auth.login') }}">Login</a>
-        <a href="{{ url_for('auth.register') }}">Register</a>
-    </nav>
-</header>
-<main class="container">
-    <h2>Register</h2>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    <form method="POST" action="{{ url_for('auth.register') }}" id="register-form">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required>
-        <div class="validation-error" id="username-error" style="display: none;"></div>
-        <div class="validation-success" id="username-success" style="display: none;">✓ Username looks good</div>
+{% extends "base.html" %}
 
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required>
-        <div class="validation-error" id="email-error" style="display: none;"></div>
-        <div class="validation-success" id="email-success" style="display: none;">✓ Valid email</div>
+{% block title %}KMS | Register{% endblock %}
 
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required>
-        <div class="validation-error" id="password-error" style="display: none;"></div>
-        <div class="password-strength" id="password-strength" style="display: none;"></div>
+{% block content %}
+<h2>Register</h2>
 
-        <label for="dob">Date of Birth:</label>
-        <input type="date" id="dob" name="dob" required>
-        <div class="validation-error" id="dob-error" style="display: none;"></div>
+<form method="POST" action="{{ url_for('auth.register') }}" id="register-form">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required>
+    <div class="validation-error" id="username-error" style="display: none;"></div>
+    <div class="validation-success" id="username-success" style="display: none;">✓ Username looks good</div>
 
-        <button type="submit">Register</button>
-    </form>
-    <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a></p>
-</main>
-<footer>
-    <p>&copy; 2025 Kitchen Management Suite</p>
-</footer>
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" required>
+    <div class="validation-error" id="email-error" style="display: none;"></div>
+    <div class="validation-success" id="email-success" style="display: none;">✓ Valid email</div>
 
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
+    <div class="validation-error" id="password-error" style="display: none;"></div>
+    <div class="password-strength" id="password-strength" style="display: none;"></div>
+
+    <label for="dob">Date of Birth:</label>
+    <input type="date" id="dob" name="dob" required>
+    <div class="validation-error" id="dob-error" style="display: none;"></div>
+
+    <button type="submit">Register</button>
+</form>
+<p>Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a></p>
+{% endblock %}
+
+{% block extra_js %}
 <script type="module">
   import { validateEmail, calculatePasswordStrength, validateAge, showError, hideError, showSuccess } from "{{ url_for('static', filename='validation.js') }}";
 
@@ -143,5 +124,4 @@
     if (!isValid) e.preventDefault();
   });
 </script>
-</body>
-</html>
+{% endblock %}

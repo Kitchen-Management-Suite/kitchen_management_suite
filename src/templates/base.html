@@ -1,0 +1,51 @@
+<!-- Gets rid of the need to keep repeating redundant html!!! -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}KMS{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='navbar.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar Root - Rendered by JavaScript -->
+    <div id="navbar-root"></div>
+
+    
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 Kitchen Management Suite</p>
+    </footer>
+
+    <!-- Pass navbar data from Flask to JavaScript -->
+    <script>
+        window.navbarData = {{ navbar_data | tojson }};
+    </script>
+
+    <!-- Load and render navbar -->
+    <script type="module">
+        import { render } from "{{ url_for('static', filename='hook.js') }}";
+        import { NavbarContainer } from "{{ url_for('static', filename='navbar.js') }}";
+
+        // Render navbar
+        render(NavbarContainer(), document.getElementById('navbar-root'));
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,68 +1,49 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>KMS | Home</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}"
-    />
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='public.css') }}"
-    />
-  </head>
-  <body>
-    <header>
-      <nav>
-        <a href="{{ url_for('index') }}">Home</a>
-        <a href="{{ url_for('auth.login') }}">Login</a>
-        <a href="{{ url_for('auth.register') }}">Register</a>
-      </nav>
-    </header>
-    <main class="container">
-      <div class="hero">
-        <h1>Kitchen Management Suite</h1>
-        <p>The Final Solution for All Your Kitchen Needs</p>
+{% extends "base.html" %}
 
-        <div class="cta-section">
-          <a href="{{ url_for('auth.register') }}" class="btn-primary"
-            >Get Started</a
-          >
-        </div>
-        <div class="login-link">
-          Already have an account?
-          <a href="{{ url_for('auth.login') }}">Log in</a>
-        </div>
-      </div>
+{% block title %}KMS | Home{% endblock %}
 
-      <div id="features-root"></div>
-    </main>
-    <footer>
-      <p>&copy; 2025 Kitchen Management Suite</p>
-    </footer>
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='public.css') }}">
+{% endblock %}
 
-    <script type="module">
-      import { h, render } from "{{ url_for('static', filename='hook.js') }}";
+{% block content %}
+<div class="hero">
+    <h1>Kitchen Management Suite</h1>
+    <p>The Final Solution for All Your Kitchen Needs</p>
 
-      function Features() {
-        const features = [
-          { title: "Household Management" },
-          { title: "Pantry Tracking" },
-          { title: "Recipe Storage" },
-          { title: "Diet Logging" },
-        ];
+    <div class="cta-section">
+        <a href="{{ url_for('auth.register') }}" class="btn-primary">Get Started</a>
+    </div>
+    <div class="login-link">
+        Already have an account?
+        <a href="{{ url_for('auth.login') }}">Log in</a>
+    </div>
+</div>
 
-        return h(
-          "div",
-          { class: "features" },
-          ...features.map((f) =>
-            h("div", { class: "feature" }, h("h3", null, f.title)),
-          ),
-        );
-      }
+<div id="features-root"></div>
+{% endblock %}
 
-      render(h(Features), document.getElementById("features-root"));
-    </script>
-  </body>
-</html>
+{% block extra_js %}
+<script type="module">
+  import { h, render } from "{{ url_for('static', filename='hook.js') }}";
+
+  function Features() {
+    const features = [
+      { title: "Household Management" },
+      { title: "Pantry Tracking" },
+      { title: "Recipe Storage" },
+      { title: "Diet Logging" },
+    ];
+
+    return h(
+      "div",
+      { class: "features" },
+      ...features.map((f) =>
+        h("div", { class: "feature" }, h("h3", null, f.title)),
+      ),
+    );
+  }
+
+  render(h(Features), document.getElementById("features-root"));
+</script>
+{% endblock %}

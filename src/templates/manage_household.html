@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}KMS | Manage Households{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='household.css') }}">
+
+{% endblock %}
+
+{% block content %}
+<div class="household-management">
+    <h2>Manage Households</h2>
+
+    <div class="info-box">
+        <p>Household creation and joining functionality will be on this page</p>
+    </div>
+
+    <!-- Current Households -->
+    {% if user_households %}
+    <div class="current-households">
+        <h3>Your Current Households</h3>
+        <ul class="household-list">
+            {% for household in user_households %}
+            <li class="household-item">
+                <div>
+                    <strong>{{ household.HouseholdName }}</strong>
+                    <div class="role">Member</div>
+                </div>
+                <div>
+                    {% if household.HouseholdID == current_household_id %}
+                    <span style="color: #2e7d32; font-weight: bold;">✓ Active</span>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="management-section">
+        <h3>Management</h3>
+        <div class="form-placeholder">
+            <p>NEED TO ADD CREATE AND JOIN HOUSEHOLD FORM</p>
+            <p>Fields: Household Name, Description, etc.</p>
+            <p>need to determine how users will be invited to/join existing households</p>
+            <p>along with if there is password auth for each household, or if household admin needs to approve join requests</p>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

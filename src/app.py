@@ -1,14 +1,14 @@
 """
 File: app.py
 File-Path: src/app.py
-Author: Thomas Bruce
+Author: Thomas Bruce, Rohan Plante
 Date-Created: 09-29-2025
 
 Description:
     Base of Flask app
 
 Inputs:
-    auth blueprint
+    flask blueprints
     db schemas
 
 
@@ -18,7 +18,7 @@ Outputs:
 """
 
 import os
-from flask import Flask, render_template, session
+from flask import Flask, render_template, session, redirect, url_for, flash, request
 from dotenv import load_dotenv
 
 # load environment variables
@@ -29,8 +29,16 @@ from db.server import engine, Base, init_database
 # schema imports
 from db.schema import adds, authors, holds, household, item, member, pantry, recipe, role, user_nutrition, user_profile, user
 
-# auth blueprint import
-from auth import auth_bp
+# helper imports
+from helpers.navbar_helper import (
+    set_current_household_id,
+    get_user_households,
+    inject_navbar_context
+)
+
+# import blueprints
+from blueprints.auth import auth_bp
+from blueprints.recipes import recipes_bp
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -42,6 +50,14 @@ with app.app_context():
 
 # register auth blueprint
 app.register_blueprint(auth_bp)
+app.register_blueprint(recipes_bp)
+
+# register navbar w/ context processor (inject w/ existing variables)
+# refer to navbar_helper.py
+@app.context_processor
+def inject_navbar():
+    """Inject navbar data into templates"""
+    return inject_navbar_context()
 
 @app.route("/")
 def index():
@@ -50,6 +66,67 @@ def index():
         return render_template("index.html")
     else:
         return render_template("public.html")
+
+@app.route("/pantry")
+def pantry():
+    """handle pantry route"""
+    if not session.get('logged_in'):
+        flash('Please log in to access the pantry.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    # check if user is in any households
+    households = get_user_households()
+    if not households:
+        flash('You need to join a household first.', 'error')
+        return redirect(url_for('index'))
+
+    return render_template("pantry.html")
+
+@app.route("/recipes")
+def recipes():
+    """handle recipes route"""
+    if not session.get('logged_in'):
+        flash('Please log in to access the recipes.', 'error')
+        return redirect(url_for('auth.login'))
+
+    return render_template(url_for('recipes.recipes'))
+
+@app.route("/account")
+def account():
+    """handle account route"""
+    if not session.get('logged_in'):
+        flash('Please log in to access your account.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    return render_template("account.html")
+
+@app.route("/switch_household/<int:household_id>")
+def switch_household(household_id):
+    """Switch the current household for the user session"""
+    if not session.get('logged_in'):
+        flash('Please log in to switch households.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    households = get_user_households()
+    household_ids = [h.HouseholdID for h in households]
+    
+    if household_id in household_ids:
+        set_current_household_id(household_id)
+        flash('Household switched successfully', 'success')
+    else:
+        flash('You do not have access to this household', 'error')
+    
+    return redirect(request.referrer)
+
+@app.route("/household/manage")
+def manage_household():
+    """Handle household management route"""
+    if not session.get('logged_in'):
+        flash('Please log in to manage households.', 'error')
+        return redirect(url_for('auth.login'))
+
+    # NEED TO IMPLEMENT HOUSEHOLD CREATION AND JOIN FUNCTIONALITY
+    return render_template('manage_household.html')
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

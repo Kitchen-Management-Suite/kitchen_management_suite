@@ -1,6 +1,6 @@
 """
 File: auth.py
-File-Path: src/auth.py
+File-Path: src/blueprints/auth.py
 Author: Thomas Bruce
 Date-Created: 10-28-2025
 

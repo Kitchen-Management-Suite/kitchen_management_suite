@@ -1,0 +1,68 @@
+.household-management {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.management-section {
+    margin: 2rem 0;
+    padding: 2rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #f9f9f9;
+}
+
+.management-section h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+.form-placeholder {
+    padding: 3rem;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    background: white;
+    border-radius: 4px;
+}
+
+.info-box {
+    background: #e3f2fd;
+    border-left: 4px solid #1976d2;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    border-radius: 4px;
+}
+
+.info-box h4 {
+    margin-top: 0;
+    color: #1976d2;
+}
+
+.current-households {
+    margin-top: 2rem;
+}
+
+.household-list {
+    list-style: none;
+    padding: 0;
+}
+
+.household-item {
+    padding: 1rem;
+    margin: 0.5rem 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.household-item strong {
+    font-size: 1.1rem;
+}
+
+.household-item .role {
+    color: #666;
+    font-size: 0.9rem;
+}

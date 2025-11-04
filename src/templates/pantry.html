@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}KMS | Pantry{% endblock %}
+
+{% block content %}
+<h2>Pantry Dashboard</h2>
+
+<div id="household-info">
+    {% if current_household_id %}
+        <p>Current Household ID: {{ current_household_id }}</p>
+    {% else %}
+        <p>No household selected. Please select one from the dropdown above.</p>
+    {% endif %}
+</div>
+
+<div id="pantry-content">
+    <p>Pantry content will appear here...</p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+    // Access current household data
+    const navbarData = window.navbarData;
+    console.log('Current household:', navbarData.currentHouseholdId);
+    
+</script>
+{% endblock %}
