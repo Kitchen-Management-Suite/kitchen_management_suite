@@ -1,29 +1,32 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>KMS | Account</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}"
-    />
-  </head>
-  <body>
-    <header>
-      <nav>
-        <a href="index.html">Home</a>
-        <a href="login.html">Login</a>
-        <a href="register.html">Register</a>
-        <a href="account.html">Account</a>
-        <a href="kitchen.html">Kitchen</a>
-      </nav>
-    </header>
-    <main class="container">
-      <h2>Account</h2>
-      <p>This is the account page.</p>
-    </main>
-    <footer>
-      <p>&copy; 2025 Kitchen Management Suite</p>
-    </footer>
-  </body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}KMS | Account{% endblock %}
+
+{% block content %}
+<h2>Account Settings</h2>
+
+<!-- 
+    TO DO:
+        - ADD FORM TO FINISH SETTING UP USER PROFILE
+        - THIS IS VERY IMPORTANT!!!!!!
+-->
+
+<div class="account-info">
+    <h3>User Information</h3>
+    <p><strong>Username:</strong> {{ session.username }}</p>
+    <p><strong>User ID:</strong> {{ session.user_id }}</p>
+</div>
+
+<div class="account-households">
+    <h3>Your Households</h3>
+    {% if user_households %}
+        <ul>
+            {% for household in user_households %}
+                <li>{{ household.HouseholdName }} (ID: {{ household.HouseholdID }})</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>You are not a member of any households yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

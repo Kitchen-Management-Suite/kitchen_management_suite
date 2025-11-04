@@ -1,0 +1,64 @@
+/* public.css */
+
+.hero {
+    text-align: center;
+    padding: 2rem 1rem;
+}
+
+.hero h1 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.hero p {
+    color: #555;
+    margin-bottom: 1.5rem;
+}
+
+.cta-section {
+    margin: 1.5rem 0;
+}
+
+.btn-primary {
+    padding: 0.75rem 2rem;
+    background-color: black;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary:hover {
+    background-color: #333;
+}
+
+.login-link {
+    margin-top: 1rem;
+    color: #555;
+}
+
+.login-link a {
+    color: black;
+    text-decoration: underline;
+}
+
+.features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.feature {
+    padding: 1rem;
+    border: 1px solid #ddd;
+    text-align: center;
+}
+
+.feature-icon {
+    font-size: 1.5rem;
+}
+

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32,3 +33,44 @@
 </footer>
 </body>
 </html>
+=======
+{% extends "base.html" %}
+
+{% block title %}KMS | Home{% endblock %}
+
+{% block content %}
+<div id="greeting-root"></div>
+<div id="quick-actions-root"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+    import { h, render } from "{{ url_for('static', filename='hook.js') }}";
+
+    function QuickActions() {
+        const actions = [
+            { title: "Pantry", link: "/pantry" },
+            { title: "Recipes", link: "/recipes" },
+            { title: "Account", link: "/account" }
+        ];
+
+        return h("div", null,
+            h("h3", null, "Quick Actions"),
+            h("div", { class: "quick-actions" },
+                ...actions.map(action => 
+                    h("a", { href: action.link, class: "action-card" },
+                        h("div", { class: "action-title" }, action.title)
+                    )
+                )
+            )
+        );
+    }
+
+    // Render greeting
+    document.getElementById("greeting-root").innerHTML = '<h2>Welcome, {{ session.username }}!</h2>';
+    
+    // Render quick actions
+    render(h(QuickActions), document.getElementById("quick-actions-root"));
+</script>
+{% endblock %}
+>>>>>>> main

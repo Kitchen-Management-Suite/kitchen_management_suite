@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}KMS | Recipes{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='recipes.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="household-header">
+    <h2>Recipes{% if current_household %} - {{ current_household.HouseholdName }}{% endif %}</h2>
+</div>
+
+<!-- User Authored Recipes -->
+<div class="recipe-section">
+    <div class="recipe-section-header">
+        <h3>Authored</h3>
+        {% if user_recipes and user_recipes|length > 3 %}
+        <button class="view-all-btn" onclick="toggleExpanded('user-recipes-carousel')">
+            Show All
+        </button>
+        {% endif %}
+    </div>
+    {% if user_recipes %}
+    <div class="carousel" id="user-recipes-carousel">
+        {% for recipe in user_recipes %}
+        <a href="{{ url_for('recipes.recipe_detail', recipe_id=recipe.RecipeID) }}" class="recipe-card">
+            <h4>{{ recipe.RecipeName }}</h4>
+            <div class="recipe-meta">
+                {% if recipe.RecipeBody and recipe.RecipeBody.serves %}
+                Serves: {{ recipe.RecipeBody.serves }}
+                {% endif %}
+            </div>
+            <div class="recipe-meta">
+                {% if recipe.RecipeBody and recipe.RecipeBody.preptime %}
+                Prep: {{ recipe.RecipeBody.preptime }} min
+                {% endif %}
+                {% if recipe.RecipeBody and recipe.RecipeBody.cooktime %}
+                | Cook: {{ recipe.RecipeBody.cooktime }} min
+                {% endif %}
+            </div>
+            <span class="recipe-source {% if recipe.IsGlobal %}global{% else %}custom{% endif %}">
+                {{ recipe.Source|upper }}
+            </span>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-carousel">
+        <!-- URGENT NEED TO CREATE AND CONNECT TO PROPER FORM -->
+        <button>Create New Recipe</button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Household Recipes -->
+<div class="recipe-section">
+    <div class="recipe-section-header">
+        <h3>Household</h3>
+        {% if household_recipes and household_recipes|length > 3 %}
+        <button class="view-all-btn" onclick="toggleExpanded('household-recipes-carousel')">
+            Show All
+        </button>
+        {% endif %}
+    </div>
+    {% if household_recipes %}
+    <div class="carousel" id="household-recipes-carousel">
+        {% for recipe in household_recipes %}
+        <a href="{{ url_for('recipes.recipe_detail', recipe_id=recipe.RecipeID) }}" class="recipe-card">
+            <h4>{{ recipe.RecipeName }}</h4>
+            <div class="recipe-meta">
+                {% if recipe.RecipeBody and recipe.RecipeBody.serves %}
+                Serves: {{ recipe.RecipeBody.serves }}
+                {% endif %}
+            </div>
+            <div class="recipe-meta">
+                {% if recipe.RecipeBody and recipe.RecipeBody.preptime %}
+                Prep: {{ recipe.RecipeBody.preptime }} min
+                {% endif %}
+                {% if recipe.RecipeBody and recipe.RecipeBody.cooktime %}
+                | Cook: {{ recipe.RecipeBody.cooktime }} min
+                {% endif %}
+            </div>
+            <span class="recipe-source {% if recipe.IsGlobal %}global{% else %}custom{% endif %}">
+                {{ recipe.Source|upper }}
+            </span>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-carousel">
+        No recipes saved in this household yet. Browse recommended recipes below!
+    </div>
+    {% endif %}
+</div>
+
+<!-- Recommended Recipes -->
+<div class="recipe-section">
+    <div class="recipe-section-header">
+        <h3>Recommended</h3>
+        {% if recommended_recipes and recommended_recipes|length > 3 %}
+        <button class="view-all-btn" onclick="toggleExpanded('recommended-recipes-carousel')">
+            Show All
+        </button>
+        {% endif %}
+    </div>
+    {% if recommended_recipes %}
+    <div class="carousel" id="recommended-recipes-carousel">
+        {% for recipe in recommended_recipes %}
+        <a href="{{ url_for('recipes.recipe_detail', recipe_id=recipe.RecipeID) }}" class="recipe-card">
+            <h4>{{ recipe.RecipeName }}</h4>
+            <div class="recipe-meta">
+                {% if recipe.RecipeBody and recipe.RecipeBody.serves %}
+                Serves: {{ recipe.RecipeBody.serves }}
+                {% endif %}
+            </div>
+            <div class="recipe-meta">
+                {% if recipe.RecipeBody and recipe.RecipeBody.preptime %}
+                Prep: {{ recipe.RecipeBody.preptime }} min
+                {% endif %}
+                {% if recipe.RecipeBody and recipe.RecipeBody.cooktime %}
+                | Cook: {{ recipe.RecipeBody.cooktime }} min
+                {% endif %}
+            </div>
+            <span class="recipe-source global">
+                {{ recipe.Source|upper }}
+            </span>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-carousel">
+        No recommendations available at this time.
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function toggleExpanded(carouselId) {
+    const carousel = document.getElementById(carouselId);
+    const btn = carousel.parentElement.querySelector('.view-all-btn');
+    
+    if (carousel.classList.contains('expanded')) {
+        carousel.classList.remove('expanded');
+        btn.classList.remove('expanded');
+        btn.innerHTML = 'Show All';
+    } else {
+        carousel.classList.add('expanded');
+        btn.classList.add('expanded');
+        btn.innerHTML = 'Show Less';
+    }
+}
+</script>
+{% endblock %}
