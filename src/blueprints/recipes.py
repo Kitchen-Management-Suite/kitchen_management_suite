@@ -67,9 +67,8 @@ def recipes():
         # Get unique recipe IDs first, then fetch recipes
         user_recipe_ids = db_session.query(Authors.RecipeID).filter(
             and_(
-                Authors.UserID == user_id,
-                Authors.HouseholdID == current_household_id
-            )
+                Authors.UserID == user_id
+                )
         ).distinct().all()
         
         user_recipe_ids = [r[0] for r in user_recipe_ids]
