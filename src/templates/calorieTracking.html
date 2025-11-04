@@ -12,19 +12,22 @@
     <header>
       <nav>
         <a href="index.html">Home</a>
-        <a href="login.html">Login</a>
-        <a href="register.html">Register</a>
+        <a href="register">Register</a>
         <a href="account.html">Account</a>
         <a href="kitchen.html">Kitchen</a>
+        <a href="{{ url_for('auth.logout') }}">Logout</a>
+
       </nav>
     </header>
     <main class="container">
-      <h2>Calorie Tracking</h2>
-      <h3> DATE </h3> 
+      <h2> {{nutritionData.Date}} </h2>
+      <h3> {{nutritionData.CaloriesConsumed}} kCals </h3> 
       <progress value = 25%> 25% </progress> 
-      <h3> Macro Nutrients Carbs:{} Fat:{} Protein:{}</h3>
+      <h3>Carbs:{{nutritionData.Carbs}} Protein:{{nutritionData.Protein}} Fat:{{nutritionData.Protein}} </h3>
       <p>This is Calorie Tracking Main Page</p>
-      <button class = "addMeal"> AddMeal </button>
+      <p> {{ session }}</p>
+      <h2 style="background-color: gray;"> Breakfast </h2>
+      <button class = "addMeal" onclick="console.log()"> AddMeal </button>
     </main>
     <footer>
       <p>&copy; 2025 Kitchen Management Suite</p>
