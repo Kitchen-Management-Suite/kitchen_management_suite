@@ -62,7 +62,10 @@ export function Navbar(props) {
               href: '/pantry', 
               class: isActive('pantry') ? 'active' : '' 
             }, 'Pantry'),
-            h('a', { href: '/logout' }, 'Logout')
+            h('a', {href: '/calorieTracking',
+              class: isActive('calorieTracking' ? 'active': '')
+            }, "Track Calories"),
+            h('a', { href: '/logout' }, 'Logout'),
           ),
           
           // Household Selector / Create/Join Button

@@ -1,36 +1,40 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>KMS | Calorie Tracker</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}"
-    />
-  </head>
-  <body>
-    <header>
-      <nav>
-        <a href="index.html">Home</a>
-        <a href="register">Register</a>
-        <a href="account.html">Account</a>
-        <a href="kitchen.html">Kitchen</a>
-        <a href="{{ url_for('auth.logout') }}">Logout</a>
+{% extends "base.html" %}
 
-      </nav>
-    </header>
-    <main class="container">
+{% block title %}KMS | Pantry{% endblock %}
+
+{% block extra_css %}
+<!-- <link rel = "stylesheet" href = "{{ url_for('static', filename = 'calorieTracking.css')}}"> -->
+<link rel="stylesheet" href="{{ url_for('static', filename='calorieTracking.css') }}">
+
+{% endblock %}
+
+
+{% block content %}
       <h2> {{nutritionData.Date}} </h2>
       <h3> {{nutritionData.CaloriesConsumed}} kCals </h3> 
+
       <progress value = 25%> 25% </progress> 
-      <h3>Carbs:{{nutritionData.Carbs}} Protein:{{nutritionData.Protein}} Fat:{{nutritionData.Protein}} </h3>
-      <p>This is Calorie Tracking Main Page</p>
-      <p> {{ session }}</p>
-      <h2 style="background-color: gray;"> Breakfast </h2>
-      <button class = "addMeal" onclick="console.log()"> AddMeal </button>
-    </main>
-    <footer>
-      <p>&copy; 2025 Kitchen Management Suite</p>
-    </footer>
-  </body>
-</html>
+      <h3> Carbs:{{nutritionData.Carbs}} Protein:{{nutritionData.Protein}} Fat:{{nutritionData.Protein}} </h3>
+      <p class = baseNutriInfo>This is Calorie Tracking Main Page</p>
+      <main class = container>
+        <div> 
+          <h2 class = mealTypeHeader> Breakfast </h2>
+          <button class = "addMeal" onclick="console.log()"> AddMeal </button>
+
+        </div>
+              
+        <div >
+          <h2 class = mealTypeHeader> Lunch </h2>
+          <button class = "addMeal" onclick="console.log()"> AddMeal </button>
+        </div>
+              
+        <div>
+          <h2 class = mealTypeHeader> Dinner </h2>
+            <button class = "addMeal" onclick="console.log()"> AddMeal </button>
+
+      </main>
+      
+      </div>
+
+{% endblock %}
+    

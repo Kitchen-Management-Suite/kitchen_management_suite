@@ -39,15 +39,15 @@ entity UserNutrition {
     Sodium
 }
 
-' entity FoodLog{
-'     'FoodLog: Stores log of all meals eaten per day'
-'     Log ID <<key>>
-'     Nutrition ID <<FK>>
-'     Name 
-'     MacroNutrients
-'     Barcode 
-'     Picture
-' }
+entity FoodLog{
+    'FoodLog: Stores log of all meals eaten per day'
+    Log ID <<key>>
+    Nutrition ID <<FK>>
+    Name 
+    MacroNutrients
+    Barcode 
+    Picture
+}
 
 entity Role {
     Role ID <<key>>
@@ -166,7 +166,7 @@ Recipe -N- Authors
 Household -M- Holds
 Holds -N- Recipe
 
-' UserNutrition -1- FoodLog
+UserNutrition -1- FoodLog
 
 @endchen
 @enduml

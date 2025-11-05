@@ -77,14 +77,14 @@ def editMacro(UserNutrition, macroType, newVal):
         try:
             #setattr(MyClass, attribute_name_vaxriable, attribute_value)
             setattr(UserNutrition, macroType, newVal)
-            session.commit()
-            session.expire_all()
+            sqlSession.commit()
+            sqlSession.expire_all()
 
         except Exception as ex:
-            session.rollback()
+            sqlSession.rollback()
             print("Error in editing macro dumbass",ex)
         finally:
-            session.close() 
+            sqlSession.close() 
     
 @app.route('/calorieTracking')
 def calorieTracking():
@@ -100,7 +100,7 @@ def calorieTracking():
         flash("No user nutrition data found, populating default values", "warning")
         return render_template('index')
 
-    return render_template('calorieTracking.html', nutritionData = nutritionData, session = flaskSession, apiCallTest = trottleApiBy)
+    return render_template('calorieTracking.html', nutritionData = nutritionData, session = flaskSession)
 
 ##Enter End point here for 
 

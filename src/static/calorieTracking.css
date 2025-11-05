@@ -1,0 +1,31 @@
+.mealTypeHeader{
+    align-items: center;
+    align-content: center;
+    text-align: center;
+    background-color: #666;
+    color:azure;
+    border-radius: 10px;
+}
+
+.container {
+    max-width: 80ch;
+    margin: 2rem auto;
+    padding: 1.5rem;
+    background: white;
+    border: 1px solid #ddd;
+    flex: 1;
+}
+
+/* .baseNutriInfo {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    margin-right: 0.5rem;
+} */
+ .nutriInfoCarbs {
+    background: #f3e5f5;
+    color: #7b1fa2;
+}
+
