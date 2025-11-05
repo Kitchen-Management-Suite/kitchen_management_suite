@@ -165,6 +165,14 @@ def manage_household():
     # NEED TO IMPLEMENT HOUSEHOLD CREATION AND JOIN FUNCTIONALITY
     return render_template('manage_household.html')
 
+@app.route("/mealItemSearch")
+def mealItemSearch():
+    if not session.get('logged_in'):
+        flash('Please log in to track calories.', 'error')
+        return redirect(url_for('auth.login'))
+    print("TEST")
+    return redirect(url_for('mealItemSearch'))
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
 
