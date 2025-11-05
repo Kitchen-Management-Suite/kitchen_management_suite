@@ -32,7 +32,16 @@
 
 {% block extra_js %}
 <script type="module">
-  import { validateEmail, calculatePasswordStrength, validateAge, showError, hideError, showSuccess } from "{{ url_for('static', filename='validation.js') }}";
+  import { 
+    validateEmail, 
+    validateUsername,
+    validatePassword,
+    calculatePasswordStrength, 
+    validateAge, 
+    showError, 
+    hideError, 
+    showSuccess 
+  } from "{{ url_for('static', filename='validation.js') }}";
 
   const form = document.getElementById('register-form');
   const usernameInput = document.getElementById('username');
@@ -42,7 +51,8 @@
 
   usernameInput.addEventListener('input', () => {
     hideError('username');
-    if (usernameInput.value.length >= 3) {
+    const result = validateUsername(usernameInput.value);
+    if (result.valid) {
       showSuccess('username');
     } else {
       const successEl = document.getElementById('username-success');
@@ -86,11 +96,10 @@
     hideError('password');
     hideError('dob');
 
-    if (!usernameInput.value) {
-      showError('username', 'Username is required');
-      isValid = false;
-    } else if (usernameInput.value.length < 3) {
-      showError('username', 'Username must be at least 3 characters');
+    // Validate username
+    const usernameResult = validateUsername(usernameInput.value);
+    if (!usernameResult.valid) {
+      showError('username', usernameResult.error);
       isValid = false;
     }
 
@@ -102,23 +111,18 @@
       isValid = false;
     }
 
-    if (!passwordInput.value) {
-      showError('password', 'Password is required');
-      isValid = false;
-    } else if (passwordInput.value.length < 6) {
-      showError('password', 'Password must be at least 6 characters');
+    // Validate password
+    const passwordResult = validatePassword(passwordInput.value);
+    if (!passwordResult.valid) {
+      showError('password', passwordResult.error);
       isValid = false;
     }
 
-    if (!dobInput.value) {
-      showError('dob', 'Date of birth is required');
+    // Validate date of birth
+    const ageResult = validateAge(dobInput.value);
+    if (!ageResult.valid) {
+      showError('dob', ageResult.error);
       isValid = false;
-    } else {
-      const age = validateAge(dobInput.value);
-      if (age < 13) {
-        showError('dob', 'You must be at least 13 years old to register');
-        isValid = false;
-      }
     }
 
     if (!isValid) e.preventDefault();
