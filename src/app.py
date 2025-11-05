@@ -170,9 +170,10 @@ if __name__ == "__main__":
 
 
 #To do 
-# Pull in new data
 # Rewrite api calls for java
 # Write api throttler for java
-# Design frontend page 
+# Write conditionals for loading calorite track page
+# Write second (VERY BASIC) search page for info meals
+# Write the ability to pull in anything else necessary (recipies etc)
 # IF POSSIBLE allow selection of mulitple days
 # - This will require automatically checking and creating data for days that dont exist

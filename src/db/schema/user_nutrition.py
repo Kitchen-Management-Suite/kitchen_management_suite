@@ -39,6 +39,7 @@ class UserNutrition(Base):
 
     # relationship
     user = relationship("User", back_populates="nutrition_logs")
+    foodlog = relationship("FoodLog", back_populates="user_nutrition")
 
     def __repr__(self):
         return f"NUTRITION LOG for UserID: {self.UserID}, Date: {self.Date}, Calories: {self.CaloriesConsumed}"

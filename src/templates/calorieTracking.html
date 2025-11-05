@@ -3,38 +3,41 @@
 {% block title %}KMS | Pantry{% endblock %}
 
 {% block extra_css %}
-<!-- <link rel = "stylesheet" href = "{{ url_for('static', filename = 'calorieTracking.css')}}"> -->
 <link rel="stylesheet" href="{{ url_for('static', filename='calorieTracking.css') }}">
-
 {% endblock %}
-
 
 {% block content %}
-      <h2> {{nutritionData.Date}} </h2>
-      <h3> {{nutritionData.CaloriesConsumed}} kCals </h3> 
+<main class="container">
+  <h2>{{ nutritionData.Date }}</h2>
+  <h3>{{ nutritionData.CaloriesConsumed }} kCals</h3> 
 
-      <progress value = 25%> 25% </progress> 
-      <h3> Carbs:{{nutritionData.Carbs}} Protein:{{nutritionData.Protein}} Fat:{{nutritionData.Protein}} </h3>
-      <p class = baseNutriInfo>This is Calorie Tracking Main Page</p>
-      <main class = container>
-        <div> 
-          <h2 class = mealTypeHeader> Breakfast </h2>
-          <button class = "addMeal" onclick="console.log()"> AddMeal </button>
+  <progress value="25" max="100">25%</progress>
+  <h3> Carbs: {{ nutritionData.Carbs }} Protein: {{ nutritionData.Protein }} Fat: {{ nutritionData.Fat }} </h3>
+  <p class="baseNutriInfo">This is Calorie Tracking Main Page</p>
 
-        </div>
-              
-        <div >
-          <h2 class = mealTypeHeader> Lunch </h2>
-          <button class = "addMeal" onclick="console.log()"> AddMeal </button>
-        </div>
-              
-        <div>
-          <h2 class = mealTypeHeader> Dinner </h2>
-            <button class = "addMeal" onclick="console.log()"> AddMeal </button>
+  <div> 
+    <h2 class="mealTypeHeader"> Breakfast </h2>
+    <button id="1" class="addMealBtn"> AddMeal </button>
+  </div>
 
-      </main>
-      
-      </div>
+  <div>
+    <h2 class="mealTypeHeader"> Lunch </h2>
+    <button id="2" class="addMealBtn"> AddMeal </button>
+  </div>
 
+  <div>
+    <h2 class="mealTypeHeader"> Dinner </h2>
+    <button id="3" class="addMealBtn"> AddMeal </button>
+  </div>
+
+  <div id="dropdownMenu" class="dropdown">
+    <a class="typeMealSelc" href="#">Option 1</a>
+    <a class="typeMealSelc" href="#">Option 2</a>
+    <a class="typeMealSelc" href="#">Option 3</a>
+  </div>
+
+</main>
 {% endblock %}
-    
+{% block extra_js %}
+  <script defer src="{{ url_for('static', filename='calorieTrack.js') }}"></script>
+{% endblock %}
