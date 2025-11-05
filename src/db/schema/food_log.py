@@ -38,5 +38,5 @@ class FoodLog(Base):
 
     def __repr__(self):
         return f"""
-        FOODLOG: LOGID {self.LogId} for day of {user_nutrition.Date}
+        FOODLOG: LOGID {self.LogId} for day of {self.NutritionId}
         """
