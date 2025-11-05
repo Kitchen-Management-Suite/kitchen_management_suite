@@ -67,7 +67,7 @@ def inject_navbar():
 
 @app.route("/")
 def index():
-    """handle index route"""
+    """handle index route"""    
     if flaskSession.get('logged_in'):
         return render_template("index.html")
     else:
@@ -165,16 +165,31 @@ def manage_household():
     # NEED TO IMPLEMENT HOUSEHOLD CREATION AND JOIN FUNCTIONALITY
     return render_template('manage_household.html')
 
-@app.route("/mealItemSearch")
-def mealItemSearch():
+@app.route("/meal_item_search")
+def meal_item_search():
     if not session.get('logged_in'):
         flash('Please log in to track calories.', 'error')
         return redirect(url_for('auth.login'))
     print("TEST")
-    return redirect(url_for('mealItemSearch'))
+    return render_template("meal_item_search.html")
+
+@app.route("/api_search_item_name", methods = ["GET", "POST"])
+def api_search_item_name():
+    if not session.get('logged_in'):
+        flash('Please log in to track calories.', 'error')
+        return redirect(url_for('auth.login'))
+    if request.method == "POST":
+        itemBeingSearched = request.form["search_input"]
+        print("Calling backend API - searching by name for {itemBeingSearched}")
+        response = searchByStr(itemBeingSearched)#We should do some sanitzation here BTW
+        if response == -1: 
+            flash("Error in Open Food Facts API request, please try again later", "error")
+            return render_template("meal_item_search.html")
+    return render_template("meal_item_search.html", apiResponse = response)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
 
 
 #To do 

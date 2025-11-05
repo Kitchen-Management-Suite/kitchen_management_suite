@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}KMS | Pantry{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='calorieTracking.css') }}">
+{% endblock %}
+
+{% block content %}
+
+
+<main class="container">
+  <h2>Search for your food item here</h2>
+  <form action = "/api_search_item_name" method = "POST"> 
+    <input type = "search", id="search_input" name="search_input" placeholder="Type the name of your item here!!!"> 
+    <button type="submit" > Search </button>
+    </form>
+    
+  <div class="resultContainer">
+    {% if apiResponse is not none %}
+        {{ apiResponse }}
+    {% endif %}
+  </div>
+
+  
+</main>
+{% endblock %}
+{% block extra_js %}
+  <script defer src="{{ url_for('static', filename='foodFactsApi.js') }}"></script>
+{% endblock %}

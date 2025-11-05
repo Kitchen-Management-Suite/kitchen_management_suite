@@ -21,14 +21,12 @@ def trottleApiBy():
     print(type(flaskSession))
     # if flaskSession
 
-    
-
 def searchByStr(searchText):#Will Need to sanitize this
     try: 
         rtn = api.product.text_search(searchText)
         return rtn
     except:
-        print("Exception in API Call")
+        print("Exception in API Call")#We need to handle errors better
         return -1
 
 def searchByCode(code):
@@ -38,12 +36,5 @@ def searchByCode(code):
     except:
         print("Exception in API Call")
         return -1
+    
 code = "3017620422003"
-
-# api.product.text_search("mineral water")
-# {"count": 3006628, "page": 1, "page_count": 20, "page_size": 20, "products": [{...}], "skip": 0}
-
-# test = searchByStr("mineral water")
-# print(type)
-# print(test)
-trottleApiBy()
