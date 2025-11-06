@@ -5,110 +5,26 @@
 {% block content %}
 <h2>Pantry Dashboard</h2>
 
-<div id="household-info">
-    <label for="household-select"><strong>Select Household:</strong></label>
-    <select id="household-select">
-        <option value="">Choose a Household</option>
-        <option value="1">(Mock)Household 1</option>
-        <option value="2">(Mock)Household 2</option>
-        <option value="3">(Mock)Household 3</option>
-    </select>
+{% if current_household %}
+    <p><strong>Household:</strong> {{ current_household.HouseholdName }}</p>
+{% endif %}
 
-    <p id="household-warning" style="color: red; visibility: hidden; height: 1.2em; margin-top: 8px;">
-        No household selected. Please select one from the dropdown above.
-    </p>
-</div>
-
-<div id="pantry-content">
-    <h3>Pantry Items</h3>
-
-    <ul class="pantry-list">
-        <!-- Mock items -->
-        <li>
-            <strong>Pasta</strong> — 2 packs
-            <p>Spaghetti noodles, whole wheat.</p>
-        </li>
-        <li>
-            <strong>Tomato Sauce</strong> — 3 jars
-            <p>Organic marinara sauce.</p>
-        </li>
-        <li>
-            <strong>Olive Oil</strong> — 1 bottle
-            <p>Extra virgin, 500ml bottle.</p>
-        </li>
-    </ul>
-
-    <button class="add-item-btn">Add New Item</button>
-</div>
+<div id="pantry-root"></div>
 {% endblock %}
 
 {% block extra_js %}
+<script>
+    window.pantryData = {{ pantry_items | tojson }};
+</script>
 <script type="module">
-    const addButton = document.querySelector(".add-item-btn");
-    const select = document.getElementById("household-select");
-    const warning = document.getElementById("household-warning");
-
-    addButton.addEventListener("click", () => {
-        if (!select.value) {
-            warning.style.visibility = "visible"; 
-        } else {
-            warning.style.visibility = "hidden"; 
-            alert("This would open a form to add a new pantry item.");
-        }
-    });
-
-
-    select.addEventListener("change", () => {
-        if (select.value) {
-            warning.style.visibility = "hidden";
-        }
-    });
+    import { render, h } from "{{ url_for('static', filename='hook.js') }}";
+    import { PantryContainer } from "{{ url_for('static', filename='pantry.js') }}";
+    
+    const pantryData = window.pantryData || [];
+    render(h(PantryContainer, { pantryItems: pantryData }), document.getElementById('pantry-root'));
 </script>
 {% endblock %}
 
 {% block extra_css %}
-<style>
-    #household-info {
-        margin-bottom: 20px;
-        padding: 15px;
-        background: #f1f1f1;
-        border-radius: 8px;
-    }
-
-    #pantry-content {
-        margin-top: 20px;
-    }
-
-    .pantry-list {
-        list-style: none;
-        padding: 0;
-    }
-
-    .pantry-list li {
-        background: #f9f9f9;
-        margin: 10px 0;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .add-item-btn {
-        margin-top: 15px;
-        background-color: black;   
-        color: white;             
-        padding: 10px 20px;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 16px;
-    }
-
-    .add-item-btn:hover {
-        background-color: #333;  
-    }
-
-    h2, h3 {
-        margin-top: 0;
-    }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='pantry.css') }}">
 {% endblock %}

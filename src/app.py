@@ -39,6 +39,7 @@ from helpers.navbar_helper import (
 # import blueprints
 from blueprints.auth import auth_bp
 from blueprints.recipes import recipes_bp
+from blueprints.pantry import pantry_bp
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -48,9 +49,10 @@ with app.app_context():
     print("initializing database...")
     init_database()
 
-# register auth blueprint
+# register blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(recipes_bp)
+app.register_blueprint(pantry_bp)
 
 # register navbar w/ context processor (inject w/ existing variables)
 # refer to navbar_helper.py
@@ -67,20 +69,6 @@ def index():
     else:
         return render_template("public.html")
 
-@app.route("/pantry")
-def pantry():
-    """handle pantry route"""
-    if not session.get('logged_in'):
-        flash('Please log in to access the pantry.', 'error')
-        return redirect(url_for('auth.login'))
-    
-    # check if user is in any households
-    households = get_user_households()
-    if not households:
-        flash('You need to join a household first.', 'error')
-        return redirect(url_for('index'))
-
-    return render_template("pantry.html")
 
 @app.route("/recipes")
 def recipes():
