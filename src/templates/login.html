@@ -2,8 +2,8 @@
 {% block title %}KMS | Login{% endblock %}
 
 {% block content %}
-<h2>Login</h2>
 <form method="POST" action="{{ url_for('auth.login') }}" id="login-form">
+  <h2>Login</h2>
   <label for="email">Email:</label>
   <input type="email" id="email" name="email" required />
   <div class="validation-error" id="email-error" style="display: none;"></div>
@@ -13,8 +13,8 @@
   <div class="validation-error" id="password-error" style="display: none;"></div>
 
   <button type="submit">Login</button>
+  <p>Don't have an account? <a href="{{ url_for('auth.register') }}">Register here</a></p>
 </form>
-<p>Don't have an account? <a href="{{ url_for('auth.register') }}">Register here</a></p>
 {% endblock %}
 
 {% block extra_js %}
