@@ -122,10 +122,33 @@ function patch(dom, oldVNode, newVNode) {
   const oldChildren = oldVNode.children || [];
   const newChildren = newVNode.children || [];
   const childCount = Math.max(oldChildren.length, newChildren.length);
-  for (let i = 0; i < childCount; i++) {
-    const child = dom.childNodes[i];
-    const newChild = patch(child, oldChildren[i], newChildren[i]);
-    if (newChild !== child) dom.replaceChild(newChild, child);
+  
+  for (let i = childCount - 1; i >= 0; i--) {
+    const oldChild = oldChildren[i];
+    const newChildVNode = newChildren[i];
+    const existingChild = dom.childNodes[i];
+    
+    if (!newChildVNode && existingChild) {
+      // remove child if newVNode is null/undefined
+      dom.removeChild(existingChild);
+    } else if (newChildVNode && !existingChild) {
+      // add new child if it doesn't exist
+      const newChild = patch(null, null, newChildVNode);
+      if (newChild && newChild.nodeType !== undefined) {
+        // insert at the correct position
+        if (i < dom.childNodes.length) {
+          dom.insertBefore(newChild, dom.childNodes[i]);
+        } else {
+          dom.appendChild(newChild);
+        }
+      }
+    } else if (newChildVNode && existingChild) {
+      // patch existing child
+      const newChild = patch(existingChild, oldChild, newChildVNode);
+      if (newChild && newChild !== existingChild && newChild.nodeType !== undefined) {
+        dom.replaceChild(newChild, existingChild);
+      }
+    }
   }
   return dom;
 }
