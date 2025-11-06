@@ -17,8 +17,14 @@
     </form>
     
   <div class="resultContainer">
-    {% if apiResponse is not none %}
-        {{ apiResponse }}
+    {% if productResults is not none %}
+        {% for item in productResults %}
+            <div class = searchedItemContainer>
+                <img src="{{ item['image_small_url'] }}">
+                <p><b>{{ item['generic_name_en'] | default('N/A') }}</b></p>
+                <!-- {{item["image_small_url"]}} -->
+            </div>
+        {% endfor %}
     {% endif %}
   </div>
 

@@ -180,12 +180,14 @@ def api_search_item_name():
         return redirect(url_for('auth.login'))
     if request.method == "POST":
         itemBeingSearched = request.form["search_input"]
-        print("Calling backend API - searching by name for {itemBeingSearched}")
-        response = searchByStr(itemBeingSearched)#We should do some sanitzation here BTW
+        print(f"Calling backend API - searching by name for {itemBeingSearched}")
+        response = searchByStr(itemBeingSearched, page_size = 10)#We should do some sanitzation here BTW
         if response == -1: 
-            flash("Error in Open Food Facts API request, please try again later", "error")
             return render_template("meal_item_search.html")
-    return render_template("meal_item_search.html", apiResponse = response)
+        # print(response)
+        print(len(response["products"]))
+        
+    return render_template("meal_item_search.html", productResults = response["products"], userquery = itemBeingSearched)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

@@ -55,3 +55,10 @@
     background-color: #f0f0f0;
 }
 
+.searchedItemContainer{
+    border: #333;
+    background-color: #666;
+    padding: 10px;
+    margin: 10px;
+}
+
