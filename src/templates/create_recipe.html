@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}KMS | New Recipe{% endblock %}
+
+{% block extra_css %}
+<!-- No new external CSS file; small layout fixes scoped here -->
+<style>
+  /* Scoped to this template only so we don't touch global CSS files, will add separate css file for this later */
+  .form-container {
+    max-width: 420px;
+    margin: 28px auto;
+    padding: 20px;
+    border: 1px solid #e6e6e6;
+    border-radius: 6px;
+    background: #fff;
+  }
+
+  .form-heading {
+    text-align: center;
+    font-weight: 700;
+    margin-bottom: 18px;
+    font-size: 1.4rem;
+  }
+
+  .form-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  .form-row .form-group {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 8px;
+  }
+
+  .form-group label {
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 0.95rem;
+  }
+
+  .form-group input[type="text"],
+  .form-group input[type="number"],
+  .form-group textarea {
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    font-size: 0.95rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .form-group textarea {
+    resize: vertical;
+    min-height: 88px;
+  }
+
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 12px 0;
+  }
+
+  .checkbox-row input[type="checkbox"] {
+    /* makes sure checkbox aligns with label text baseline */
+    transform: translateY(1px);
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-start;
+    align-items: center;
+    margin-top: 12px;
+  }
+
+  .cancel-btn {
+    color: #4a46f5;
+    text-decoration: none;
+    font-size: 0.9rem;
+    align-self: center;
+    margin-left: 6px;
+  }
+
+  @media (max-width: 480px) {
+    .form-container {
+      margin: 18px;
+    }
+
+    .form-row {
+      flex-direction: column;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+  <div class="form-heading">Create New Recipe</div>
+
+  <!-- POST to the same route that serves form, handled by blueprint -->
+  <form method="POST" class="recipe-form" novalidate>
+    <div class="form-group">
+      <label for="recipe_name">Recipe Name</label>
+      <input id="recipe_name" name="recipe_name" type="text" placeholder="e.g., Best Pancakes" required>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="serves">Serves</label>
+        <input id="serves" name="serves" type="number" min="1" placeholder="e.g., 4">
+      </div>
+      <div class="form-group">
+        <label for="preptime">Prep Time (min)</label>
+        <input id="preptime" name="preptime" type="number" min="0" placeholder="e.g., 10">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="cooktime">Cook Time (min)</label>
+        <input id="cooktime" name="cooktime" type="number" min="0" placeholder="e.g., 15">
+      </div>
+      <div class="form-group">
+        <!-- left intentionally empty to keep grid aligned on larger screens -->
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="instructions">Instructions</label>
+      <textarea id="instructions" name="instructions" placeholder="Describe the recipe steps..." rows="6"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="source">Source</label>
+      <input id="source" name="source" type="text" placeholder="e.g., Family Recipe or Website Name">
+    </div>
+
+    <div class="checkbox-row">
+      <input id="is_global" name="is_global" type="checkbox">
+      <label for="is_global">Make Global</label>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="primary-btn">Create Recipe</button>
+      <a href="{{ url_for('recipes.recipes') }}" class="cancel-btn">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -47,8 +47,9 @@
     </div>
     {% else %}
     <div class="empty-carousel">
-        <!-- URGENT NEED TO CREATE AND CONNECT TO PROPER FORM -->
-        <button>Create New Recipe</button>
+        <a href="{{ url_for('recipes.create_recipe') }}">
+            <button>Create New Recipe</button>
+        </a>
     </div>
     {% endif %}
 </div>
