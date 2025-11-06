@@ -1,4 +1,3 @@
-
 document.addEventListener("DOMContentLoaded", () => {
     console.log("DOM Content Loaded running init script");
 
@@ -18,6 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
     //Becuase there is always two click checks when clicking a buttong
     //Plus the click check whenever you click anything
     //But it works and that's all that matters
+
     addMealButtons.forEach(button => {
          button.addEventListener("click", (event) => {
             dropdown.style.display = dropdown.style.display === "block" ? "none": "block";
@@ -25,8 +25,13 @@ document.addEventListener("DOMContentLoaded", () => {
             dropdown.style.left =  event.pageX + "px";
             dropdown.style.top = event.pageY + "px";
 
-            console.log(button);
+            // button.setAttribute("MealType", typeArray[i] )
+            // console.log(button.getAttribute("MealType"));
+            console.log(window.mealItemSearchLink)
+            dropdown.children[2].setAttribute("href", window.mealItemSearchLink + `?MealType=${encodeURIComponent(button.getAttribute("MealType"))}`)//Accesses the itemSearch selection of items
             curtClicked = button;
+            // dropdown.children[2].setAttribute("href", "{{url_for('meal_item_search')}}" + )//Accesses the itemSearch selection of items
+
         })
     });
 
@@ -39,8 +44,4 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     })
 })
-
-function apiStuff(){
-    console.log("API STUFF");
-}
 

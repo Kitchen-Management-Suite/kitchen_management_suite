@@ -19,7 +19,7 @@ import os
 from dotenv import load_dotenv
 from flask import session as flaskSession
 from flask import flash
-import time
+# import time
 import openfoodfacts
 import json
 import requests
@@ -27,28 +27,28 @@ import requests
 openfoodfacts_api_useragent = os.getenv('openfoodfacts_api_useragent', 'openfoodfacts_api_useragent')
 api = openfoodfacts.API(user_agent=openfoodfacts_api_useragent, timeout = 30)
 
-def trottleApiBy(apiLimit):
-    """
-    Returns a float value which is used to trottle api connections
-    """
+# def trottleApiBy(apiLimit):#Still being implemented
+#     """
+#     Returns a float value which is used to trottle api connections
+#     """
     
-    if not ("lastApiSearch" in flaskSession):
-        flaskSession["lastApiSearch"] = time.time()
-        return 0
-    timeSince = time.time() - flaskSession["lastApiSearch"]
+#     if not ("lastApiSearch" in flaskSession):
+#         flaskSession["lastApiSearch"] = time.time()
+#         return 0
+#     timeSince = time.time() - flaskSession["lastApiSearch"]
 
-    if timeSince > 60:
-        return 0
+#     if timeSince > 60:
+#         return 0
 
-    expectedTimeTilEnd = timeSince * (apiLimit-1) 
+#     expectedTimeTilEnd = timeSince * (apiLimit-1) 
 
 
-    flaskSession["lastApiSearch"] == time.time()
-    print(timeSince)
+#     flaskSession["lastApiSearch"] == time.time()
+#     print(timeSince)
     
-    print(type(flaskSession))
-    return 1
-    # if flaskSession
+#     print(type(flaskSession))
+#     return 0
+#     # if flaskSession
 
 def searchByStr(searchText, **kwargs):#Will Need to sanitize search later
     url = "https://world.openfoodfacts.org/cgi/search.pl"
@@ -73,22 +73,18 @@ def searchByStr(searchText, **kwargs):#Will Need to sanitize search later
     try: 
         response = requests.get(url, params=params)
         responseAsJson = response.json()
-        with open("jasonTempSave", "w") as f:
-            json.dump(responseAsJson, f, indent=4) 
+        # with open("jasonTempSave", "w") as f:
+        #     json.dump(responseAsJson, f, indent=4) 
         return responseAsJson
     except Exception as ex:
         print("Exception in API Call")#We need to handle errors better
         flash(ex, "error")
-
         return -1
 
 def searchByCode(code, **kwargs):
-
     try:
         rtn = api.product.get(code, fields=["code", "product_name"])
         return rtn
     except:
         print("Exception in API Call")
         return -1
-    
-code = "3017620422003"

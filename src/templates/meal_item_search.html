@@ -8,18 +8,18 @@
 
 {% block content %}
 
-
 <main class="container">
   <h2>Search for your food item here</h2>
   <form action = "/api_search_item_name" method = "POST"> 
     <input type = "search", id="search_input" name="search_input" placeholder="Type the name of your item here!!!" value = {{userquery}}> 
+    <input type = "hidden", id = "MealType" name = "MealType" value="{{MealType}}"> 
     <button type="submit" > Search </button>
-    </form>
+  </form>
     
   <div class="resultContainer">
     {% if productResults is not none %}
         {% for item in productResults %}
-            <div class = searchedItemContainer>
+            <div class = searchedItemContainer >
                 <img class = itemImage src="{{ item['image_small_url'] }}">
                 <div class = itemInfoContainer>
                     <p class = itemTitle><b>{{ item['product_name'] | default('N/A') }}</b></p>
@@ -28,17 +28,33 @@
                     <p class = itemInfo>Protein: {{ item['nutriments']['proteins'] | default('N/A') }}</p>
                     <p class = itemInfo>Fat: {{ item['nutriments']['fat'] | default('N/A') }}</p>
                 </div>
-                <Button class = itemAddbutton> addMeal </Button>
-                <!-- <button class = itemAddButton > Add Item </button> -->
-                <!-- {{item["image_small_url"]}} -->
-            </div>
+                <!-- <button value = "addMeal"> addMeal </button> -->
+                <form action="/calorieTracking" method="POST">
+                  <input type="hidden" name="itemName" value="{{ item['product_name'] }}">
+                  <input type="hidden" name="itemKCal" value="{{ item['nutriments']['energy-kcal'] }}">
+                  <input type="hidden" name="itemCarbs" value="{{ item['nutriments']['carbohydrates'] }}">
+                  <input type="hidden" name="itemProtein" value="{{ item['nutriments']['proteins'] }}">
+                  <input type="hidden" name="itemFat" value="{{ item['nutriments']['fat'] }}">
+                  <input type="hidden" name="itemFiber" value="{{ item['nutriments']['fiber'] }}">
+                  <input type="hidden" name="itemSugar" value="{{ item['nutriments']['sugars'] }}">
+                  <input type="hidden" name="itemSodium" value="{{ item['nutriments']['sodium'] }}">
+                  <input type="hidden" name="MealType" value = "{{MealType}}">
+                  
+                  <input type="submit" value="Add To Log">
+                </form>
+                <!-- <script> 
+                  document.currentScript.previousElementSibling.onclick = () => {
+                    console.log("{{item['product_name']}}")
+                  
+                  }
+                  //This will cause error on intial load but will work
+                  //Jank as fuck tho
+                </script> -->
+               
+              </div>
         {% endfor %}
     {% endif %}
   </div>
-
   
 </main>
-{% endblock %}
-{% block extra_js %}
-  <script defer src="{{ url_for('static', filename='foodFactsApi.js') }}"></script>
 {% endblock %}

@@ -17,17 +17,17 @@
 
   <div> 
     <h2 class="mealTypeHeader"> Breakfast </h2>
-    <button id="1" class="addMealBtn"> AddMeal </button>
+    <button id="1" class="addMealBtn" MealType ="Breakfast" > AddMeal </button>
   </div>
 
   <div>
     <h2 class="mealTypeHeader"> Lunch </h2>
-    <button id="2" class="addMealBtn"> AddMeal </button>
+    <button id="2" class="addMealBtn" MealType ="Lunch"> AddMeal </button>
   </div>
 
   <div>
     <h2 class="mealTypeHeader"> Dinner </h2>
-    <button id="3" class="addMealBtn"> AddMeal </button>
+    <button id="3" class="addMealBtn" MealType = "Dinner"> AddMeal </button>
   </div>
 
   <div id="dropdownMenu" class="dropdown">
@@ -35,9 +35,10 @@
     <a class="typeMealSelc" href="#">Make New Recipe</a>
     <a class="typeMealSelc"  href="{{url_for('meal_item_search')}}"> Other</a>
   </div>
-
+<!-- The href's here will dynamically change as the user selects a differnet button -->
 </main>
 {% endblock %}
 {% block extra_js %}
-  <script defer src="{{ url_for('static', filename='calorieTrack.js') }}"></script>
+  <script> window.mealItemSearchLink = "{{url_for('meal_item_search')}}"</script> 
+  <script defer src="{{ url_for('static', filename='calorieTrack.js') }}">  </script>
 {% endblock %}

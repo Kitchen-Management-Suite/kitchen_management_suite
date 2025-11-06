@@ -6,16 +6,6 @@ Contained in root/src/openfoodapi.py <br>
 Takes optional keyword arguments page_size & page <br>
 By default page_size = 100 & page = 1
 
-NOTE: Currently attributes are limited to
- ```
- defaultFields = ["generic_name_en", 
-                     "image_front_small_url",
-                     "ingredients_text_en", 
-                     "no_nutrition_data", 
-                     "nutrition_data",
-                      "obsolete" ]
-```
-Ability to add additional attributes will be added later
 ### Example Response Top level
 
 ```json

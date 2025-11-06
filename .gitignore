@@ -34,7 +34,6 @@ venv.bak/
 
 # test
 .pytest_cache
-jasonTempSave
 
 # course material
 .answers
