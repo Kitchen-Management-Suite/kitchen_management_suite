@@ -22,6 +22,7 @@ from flask import flash
 import time
 import openfoodfacts
 import json
+import requests
 
 openfoodfacts_api_useragent = os.getenv('openfoodfacts_api_useragent', 'openfoodfacts_api_useragent')
 api = openfoodfacts.API(user_agent=openfoodfacts_api_useragent, timeout = 30)
@@ -30,9 +31,7 @@ def trottleApiBy(apiLimit):
     """
     Returns a float value which is used to trottle api connections
     """
-    print("HELLO????")
-    print("THROTTLING FLASK SESSION")
-    print(flaskSession)
+    
     if not ("lastApiSearch" in flaskSession):
         flaskSession["lastApiSearch"] = time.time()
         return 0
@@ -52,6 +51,7 @@ def trottleApiBy(apiLimit):
     # if flaskSession
 
 def searchByStr(searchText, **kwargs):#Will Need to sanitize search later
+    url = "https://world.openfoodfacts.org/cgi/search.pl"
     defaultFields = ["generic_name_en", 
                      "image_front_small_url",
                      "ingredients_text_en", 
@@ -60,13 +60,22 @@ def searchByStr(searchText, **kwargs):#Will Need to sanitize search later
                       "obsolete" ]
     page_size = kwargs.get("page_size", 100)## We should move this into the try loop for production
     page = kwargs.get("page", 1)
-    additionalAttributes = kwargs.get("additionalAttributes", defaultFields)#NEEDS TO BE PROPERLY IMLEMENTED LATER
-    # trottleApiBy(10)  
+    params = {
+        "search_terms": searchText,
+        "search_simple": 1, 
+        "json": 1,
+        "page": kwargs.get("page", 1),
+        "page_size": kwargs.get("page_size", 100),
+        "complete": 1,
+        "country": "united-states"
+        # "countries": "united-states"
+    } 
     try: 
-        rtn = api.product.text_search(searchText, page_size = page_size, page = page)#, page_size = page_size, page = page
+        response = requests.get(url, params=params)
+        responseAsJson = response.json()
         with open("jasonTempSave", "w") as f:
-            json.dump(rtn, f, indent=4) 
-        return rtn
+            json.dump(responseAsJson, f, indent=4) 
+        return responseAsJson
     except Exception as ex:
         print("Exception in API Call")#We need to handle errors better
         flash(ex, "error")

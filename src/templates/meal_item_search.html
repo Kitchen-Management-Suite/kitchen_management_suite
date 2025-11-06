@@ -12,7 +12,7 @@
 <main class="container">
   <h2>Search for your food item here</h2>
   <form action = "/api_search_item_name" method = "POST"> 
-    <input type = "search", id="search_input" name="search_input" placeholder="Type the name of your item here!!!"> 
+    <input type = "search", id="search_input" name="search_input" placeholder="Type the name of your item here!!!" value = {{userquery}}> 
     <button type="submit" > Search </button>
     </form>
     
@@ -20,8 +20,16 @@
     {% if productResults is not none %}
         {% for item in productResults %}
             <div class = searchedItemContainer>
-                <img src="{{ item['image_small_url'] }}">
-                <p><b>{{ item['generic_name_en'] | default('N/A') }}</b></p>
+                <img class = itemImage src="{{ item['image_small_url'] }}">
+                <div class = itemInfoContainer>
+                    <p class = itemTitle><b>{{ item['product_name'] | default('N/A') }}</b></p>
+                    <p class = itemInfo>Calories: {{ item['nutriments']['energy-kcal'] | default('N/A') }}</p>
+                    <p class = itemInfo>Carbs: {{ item['nutriments']['carbohydrates'] | default('N/A') }}</p>
+                    <p class = itemInfo>Protein: {{ item['nutriments']['proteins'] | default('N/A') }}</p>
+                    <p class = itemInfo>Fat: {{ item['nutriments']['fat'] | default('N/A') }}</p>
+                </div>
+                <Button class = itemAddbutton> addMeal </Button>
+                <!-- <button class = itemAddButton > Add Item </button> -->
                 <!-- {{item["image_small_url"]}} -->
             </div>
         {% endfor %}

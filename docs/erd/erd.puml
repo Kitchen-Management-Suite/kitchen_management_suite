@@ -37,16 +37,7 @@ entity UserNutrition {
     Fiber
     Sugar
     Sodium
-}
-
-entity FoodLog{
-    'FoodLog: Stores log of all meals eaten per day'
-    Log ID <<key>>
-    Nutrition ID <<FK>>
-    Name 
-    MacroNutrients
-    Barcode 
-    Picture
+    mealType
 }
 
 entity Role {
@@ -165,8 +156,6 @@ Recipe -N- Authors
 ' Recipes can appear in multiple Households.
 Household -M- Holds
 Holds -N- Recipe
-
-UserNutrition -1- FoodLog
 
 @endchen
 @enduml
