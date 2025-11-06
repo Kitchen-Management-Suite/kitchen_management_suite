@@ -40,7 +40,7 @@ from blueprints.auth import auth_bp
 from blueprints.recipes import recipes_bp
 
 #API Imports
-from openfoodapi import searchByCode, searchByStr, trottleApiBy 
+from openfoodapi import searchByCode, searchByStr 
 
 #Datetime necessary for marking saved data in UserNutrition Logs
 from datetime import datetime
@@ -199,7 +199,7 @@ def calorieTracking():
             UserID = user_id,
             Date = date,
             Time = time,
-            ItemName = request.form['itemName'],
+            # ItemName = request.form['itemName'],
             CaloriesConsumed = request.form["itemKCal"],
             Protein = request.form["itemProtein"],
             Carbs = request.form["itemCarbs"],
@@ -207,7 +207,7 @@ def calorieTracking():
             Fiber = request.form["itemFiber"],
             Sugar = request.form["itemSugar"],
             Sodium = request.form["itemSodium"],
-            MealType = request.form["MealType"]
+            # MealType = request.form["MealType"]
         )
         addToLog(newNutritionEntry)
 
