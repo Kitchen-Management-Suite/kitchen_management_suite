@@ -38,12 +38,7 @@ from helpers.navbar_helper import (
 # import blueprints
 from blueprints.auth import auth_bp
 from blueprints.recipes import recipes_bp
-
-#API Imports
-from openfoodapi import searchByCode, searchByStr 
-
-#Datetime necessary for marking saved data in UserNutrition Logs
-from datetime import datetime
+from blueprints.calorieTracker import calorie_tracker_bp
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -60,6 +55,7 @@ flaskSession = session
 # register auth blueprint
 app.register_blueprint(auth_bp)
 app.register_blueprint(recipes_bp)
+app.register_blueprint(calorie_tracker_bp)
 
 # register navbar w/ context processor (inject w/ existing variables)
 # refer to navbar_helper.py
@@ -139,98 +135,10 @@ def manage_household():
     # NEED TO IMPLEMENT HOUSEHOLD CREATION AND JOIN FUNCTIONALITY
     return render_template('manage_household.html')
 
-@app.route("/meal_item_search", methods = ["GET", "POST"])
-def meal_item_search():
-    if not session.get('logged_in'):
-        flash('Please log in to track calories.', 'error')
-        return redirect(url_for('auth.login'))
-    MealType = request.args.get("MealType")
-    return render_template("meal_item_search.html", MealType = MealType)
 
-@app.route("/api_search_item_name", methods = ["GET", "POST"])
-def api_search_item_name():
-    if not session.get('logged_in'):
-        flash('Please log in to track calories.', 'error')
-        return redirect(url_for('auth.login'))
-    if request.method == "POST":
-        itemBeingSearched = request.form["search_input"]
-        MealType = request.form["MealType"]
-        print(f"Calling backend API - searching by name for {itemBeingSearched}")
-        response = searchByStr(itemBeingSearched, page_size = 10)#We should do some sanitzation here BTW
-        if response == -1:
-            #Error is handled and flashed in openfoodapi.py 
-            return render_template("meal_item_search.html")
-        if response == None:
-            flash(f"Could not find '{itemBeingSearched}' in in openfoodfacts", "error")
-            return render_template("meal_item_search.html")
-        print(len(response["products"]))
-        
-    return render_template("meal_item_search.html", productResults = response["products"], userquery = itemBeingSearched, MealType = MealType)
-
-def addToLog(UserNutrition):
-    try:
-        sqlSession.add(UserNutrition)
-        sqlSession.commit()
-        sqlSession.expire_all()
-
-    except Exception as ex:
-        sqlSession.rollback()
-        flash("Error in writing to database", "error")
-        print("Error in session dumbass",ex)
-    finally:
-        sqlSession.close() 
-    
-@app.route('/calorieTracking', methods = ["GET", "POST"])
-def calorieTracking():
-    user_id = flaskSession.get("user_id")
-    
-    if not user_id:
-        flash("User Not Found", "error")
-        return render_template('index')
-    
-    if request.method == "POST":
-        allItemData = request.form["itemName"]
-        
-        print(request.form["MealType"])
-        now = datetime.now() 
-        date = now.date()
-        time = now.time()
-        newNutritionEntry = user_nutrition.UserNutrition(
-            UserID = user_id,
-            Date = date,
-            Time = time,
-            # ItemName = request.form['itemName'],
-            CaloriesConsumed = request.form["itemKCal"],
-            Protein = request.form["itemProtein"],
-            Carbs = request.form["itemCarbs"],
-            Fat = request.form["itemFat"],
-            Fiber = request.form["itemFiber"],
-            Sugar = request.form["itemSugar"],
-            Sodium = request.form["itemSodium"],
-            # MealType = request.form["MealType"]
-        )
-        addToLog(newNutritionEntry)
-
-    # nutritionData = None
-    # nutritionData = sqlSession.query(user_nutrition.UserNutrition).filter(user_nutrition.UserNutrition.UserID == session["user_id"]).first()
-    # disabling error cathcing for debugging
-    try:
-        nutritionData = sqlSession.query(user_nutrition.UserNutrition).filter(user_nutrition.UserNutrition.UserID == session["user_id"]).first()
-    except Exception as ex:
-        flash("Error in database query", "error")
-        print(ex)
-        
-    if not nutritionData: 
-        flash("No user nutrition data found, populating default values", "error")
-        ##Need to handle this case better
-        return render_template('index.html')
-
-    return render_template('calorieTracking.html', nutritionData = nutritionData, session = flaskSession)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
-
-
 
 #To do 
 # Write api throttler for java

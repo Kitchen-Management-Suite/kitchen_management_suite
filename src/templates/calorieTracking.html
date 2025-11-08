@@ -8,11 +8,11 @@
 
 {% block content %}
 <main class="container">
-  <h2>{{ nutritionData.Date }}</h2>
-  <h3>{{ nutritionData.CaloriesConsumed }} kCals</h3> 
+  <h2>{{ date }}</h2>
+  <h3>{{ dashBoardValues["Calories"] }} kCals</h3> 
 
   <progress value="25" max="100">25%</progress>
-  <h3> Carbs: {{ nutritionData.Carbs }} Protein: {{ nutritionData.Protein }} Fat: {{ nutritionData.Fat }} </h3>
+  <h3> Carbs: {{ dashBoardValues["Carbs"] }} Protein: {{ dashBoardValues["Protein"] }} Fat: {{ dashBoardValues["Fat"]}} </h3>
   <p class="baseNutriInfo">This is Calorie Tracking Main Page</p>
 
   <div> 
@@ -33,12 +33,12 @@
   <div id="dropdownMenu" class="dropdown">
     <a class="typeMealSelc" href="#">Choose From Recipe</a>
     <a class="typeMealSelc" href="#">Make New Recipe</a>
-    <a class="typeMealSelc"  href="{{url_for('meal_item_search')}}"> Other</a>
+    <a class="typeMealSelc"  href="{{mealItemSearchUrl}}"> Other</a>
   </div>
-<!-- The href's here will dynamically change as the user selects a differnet button -->
+<!-- The href's here will dynamically change as the user selects a differnet button to pass the mealType-->
 </main>
 {% endblock %}
 {% block extra_js %}
-  <script> window.mealItemSearchLink = "{{url_for('meal_item_search')}}"</script> 
+  <script> window.mealItemSearchLink = "{{mealItemSearchUrl}}"</script> 
   <script defer src="{{ url_for('static', filename='calorieTrack.js') }}">  </script>
 {% endblock %}
