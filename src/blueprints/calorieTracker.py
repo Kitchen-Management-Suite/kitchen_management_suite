@@ -22,7 +22,7 @@ from db.server import get_session
 from db.schema import user_nutrition
 from sqlalchemy import and_, func
 from datetime import datetime
-from helpers.openfoodapi import searchByStr
+from helpers.api_helper import searchByCode, searchRawIntredient, searchByStr
 
 sqlSession = get_session()
 flaskSession = session
@@ -50,7 +50,7 @@ def api_search_item_name():
         itemBeingSearched = request.form["search_input"]
         MealType = request.form["MealType"]
         print(f"Calling backend API - searching by name for {itemBeingSearched}")
-        response = searchByStr(itemBeingSearched, page_size = 10)#We should do some sanitzation here BTW
+        response = searchByStr(itemBeingSearched)#searchByStr(itemBeingSearched, page_size = 10)#We should do some sanitzation here BTW
 
         if response == -1:
             #Error is handled and flashed in openfoodapi.py 
@@ -129,9 +129,8 @@ def calorieTracking():#KNOWN BUG - reloading this page after adding an item will
         print(ex)
         
     if not nutritionData: 
-        flash("No user nutrition data found, populating default values", "error")
-        ##Need to handle this case better
-        return render_template('index.html')
+        print("No User nutrition data retrieved")
+
     print("TESTING")
     print(dashBoardValues)
     return render_template('calorieTracking.html', 
