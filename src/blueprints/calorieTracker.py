@@ -1,7 +1,7 @@
 """
 File: calorieTracking.py
 File-Path: src/blueprints/calorieTracker.py
-Author: Rohan Plante
+Author: Noah Yurasko
 Date-Created: 11/5/2025 - Updated 11/7/2025
 
 Description:
@@ -22,7 +22,7 @@ from db.server import get_session
 from db.schema import user_nutrition
 from sqlalchemy import and_, func
 from datetime import datetime
-from helpers.api_helper import searchByCode, searchRawIntredient, searchByStr
+from helpers.api_helper import searchByCode, searchRawIngredient, searchByStr
 
 sqlSession = get_session()
 flaskSession = session

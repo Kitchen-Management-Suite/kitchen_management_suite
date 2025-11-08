@@ -96,7 +96,7 @@ def searchByCode(code, **kwargs):#Deprecated, need to change
         print("Exception in API Call")
         return -1
 
-def searchRawIntredient(name, **kwargs):
+def searchRawIngredient(name, **kwargs):
     try: 
         url =  "https://api.nal.usda.gov/fdc/v1/foods/search"
         params = {
