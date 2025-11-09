@@ -7,11 +7,10 @@
 {% endblock %}
 
 {% block content %}
-<main class="container">
   <h2>{{ date }}</h2>
   <h3>{{ dashBoardValues["Calories"] }} kCals</h3> 
 
-  <progress value="25" max="100">25%</progress>
+  <progress value="{{percentOfDailyGoal}}" max="1"> </progress>
   <h3> Carbs: {{ dashBoardValues["Carbs"] }} Protein: {{ dashBoardValues["Protein"] }} Fat: {{ dashBoardValues["Fat"]}} </h3>
   <p class="baseNutriInfo">This is Calorie Tracking Main Page</p>
 
@@ -36,7 +35,7 @@
     <a class="typeMealSelc"  href="{{mealItemSearchUrl}}"> Other</a>
   </div>
 <!-- The href's here will dynamically change as the user selects a differnet button to pass the mealType-->
-</main>
+
 {% endblock %}
 {% block extra_js %}
   <script> window.mealItemSearchLink = "{{mealItemSearchUrl}}"</script> 

@@ -113,3 +113,13 @@ def searchRawIngredient(name, **kwargs):
         print("Exception in USDA Api call")
         print(ex)
         return -1
+    
+#To do 
+# Write api throttler
+# Write conditionals for loading calorite track page
+#Finish styling very basic search page
+# # Write the ability to pull in anything else necessary (recipies etc)
+# IF POSSIBLE allow a view of multiple days
+#Running Bugs: 
+#Reloading the page after adding an item will add it twice
+#its with empty strings cannot be added to the database

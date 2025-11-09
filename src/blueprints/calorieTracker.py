@@ -19,10 +19,10 @@ Outputs:
 #In the future if I clean up this code I will swtich all to that, but for rn it all works
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from db.server import get_session
-from db.schema import user_nutrition
+from db.schema import user_nutrition, user_profile
 from sqlalchemy import and_, func
 from datetime import datetime
-from helpers.api_helper import searchByCode, searchRawIngredient, searchByStr
+from helpers.api_helper import searchByStr
 
 sqlSession = get_session()
 flaskSession = session
@@ -30,6 +30,7 @@ flaskSession = session
 calorie_tracker_bp = Blueprint('caloreTracker', __name__)
 
 #This is the page the user is routed to when searching for food
+#This endpoint could lowkey just be merged with teh other one which loads the mealtime search html file
 @calorie_tracker_bp.route("/meal_item_search", methods = ["GET", "POST"])
 def meal_item_search():
     if not session.get('logged_in'):
@@ -38,7 +39,7 @@ def meal_item_search():
     MealType = request.args.get("MealType")
     return render_template("meal_item_search.html", MealType = MealType)
 
-#This endpoint is used to make the API call and redirct the user to the same html page with the loaded content
+#This endpoint is used to make the API call and redirct the user to the same html page with the searched content
 @calorie_tracker_bp.route("/api_search_item_name", methods = ["GET", "POST"])
 def api_search_item_name():
 
@@ -50,7 +51,7 @@ def api_search_item_name():
         itemBeingSearched = request.form["search_input"]
         MealType = request.form["MealType"]
         print(f"Calling backend API - searching by name for {itemBeingSearched}")
-        response = searchByStr(itemBeingSearched)#searchByStr(itemBeingSearched, page_size = 10)#We should do some sanitzation here BTW
+        response = searchByStr(itemBeingSearched)#We need do some sanitzation here BTW
 
         if response == -1:
             #Error is handled and flashed in openfoodapi.py 
@@ -108,33 +109,43 @@ def calorieTracking():#KNOWN BUG - reloading this page after adding an item will
             addToLog(newNutritionEntry)
         except:
             flash("Error in adding item to log", "error")
-            #Log/Handle Here
             print(ex)
     dashBoardValues = {"Calories": 0, "Carbs": 0, "Protein": 0, "Fat": 0} #Setting default values
     try:
         #Will be seperating out nutrition data into breakfast lunch and dinner once db/monkeyType is updated
         nD = user_nutrition.UserNutrition
-        nutritionData = sqlSession.query(nD).filter(nD.UserID == session["user_id"]).filter(nD.Date == date).all()
+        uP = user_profile.UserProfile
+        nutritionData = sqlSession.query(nD).filter(nD.UserID == user_id).filter(nD.Date == date).all()
+        userProfileData = sqlSession.query(uP).filter(uP.UserID == user_id).first()
         if not len(nutritionData) == 0:
             for entry in nutritionData:
                 dashBoardValues["Calories"] += entry.CaloriesConsumed
                 dashBoardValues["Carbs"] += entry.Carbs
                 dashBoardValues["Protein"] += entry.Protein
                 dashBoardValues["Fat"] += entry.Fat
+        else:
+            print("User has no saved nutrtion data for the day")
+        #Calculating food bar 
+        percentOfDailyGoal = 0.0
+        if (userProfileData != None):
+            if (userProfileData.CalorieGoal != 0):
+                percentOfDailyGoal = dashBoardValues["Calories"]/userProfileData.CalorieGoal
+        else:
+            print("User has no user profile, prompt user to input user profile")
 
 
     except Exception as ex:
         flash("Error in database query", "error")
-        print("ERROR HERE")
-        print(ex)
+        print("Error in database query")
+        raise Exception(ex)
         
     if not nutritionData: 
         print("No User nutrition data retrieved")
 
-    print("TESTING")
-    print(dashBoardValues)
+    print(f"Loading User Daily Nutrition Values: {dashBoardValues}")
     return render_template('calorieTracking.html', 
                            dashBoardValues = dashBoardValues, 
                            date = date,
                            session = flaskSession, 
-                           mealItemSearchUrl = "/meal_item_search")
+                           mealItemSearchUrl = "/meal_item_search",
+                           percentOfDailyGoal = percentOfDailyGoal)
