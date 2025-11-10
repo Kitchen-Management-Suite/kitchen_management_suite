@@ -4,48 +4,85 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='household.css') }}">
-
 {% endblock %}
 
 {% block content %}
-<div class="household-management">
+<div class="household-management container">
     <h2>Manage Households</h2>
 
     <div class="info-box">
-        <p>Household creation and joining functionality will be on this page</p>
+        <p>Create or join a household to organize your pantry, recipes, and items.</p>
     </div>
 
-    <!-- Current Households -->
+    <!-- Existing Households -->
     {% if user_households %}
-    <div class="current-households">
+    <div class="current-households management-section">
         <h3>Your Current Households</h3>
         <ul class="household-list">
             {% for household in user_households %}
-            <li class="household-item">
+            <li class="household-item" data-household-id="{{ household.HouseholdID }}">
                 <div>
                     <strong>{{ household.HouseholdName }}</strong>
-                    <div class="role">Member</div>
+                    <div class="role">{{ household.Role or "Member" }}</div>
                 </div>
-                <div>
-                    {% if household.HouseholdID == current_household_id %}
-                    <span style="color: #2e7d32; font-weight: bold;">✓ Active</span>
-                    {% endif %}
-                </div>
+                {% if household.HouseholdID == current_household_id %}
+                <span style="color: #1976d2; font-weight: bold;">✓ Active</span>
+                {% else %}
+                <button class="switch-btn" data-id="{{ household.HouseholdID }}">Switch</button>
+                {% endif %}
             </li>
             {% endfor %}
         </ul>
     </div>
+    {% else %}
+    <div class="form-placeholder">
+        You are not part of any households yet.
+    </div>
     {% endif %}
 
+    <!-- Create household -->
     <div class="management-section">
-        <h3>Management</h3>
-        <div class="form-placeholder">
-            <p>NEED TO ADD CREATE AND JOIN HOUSEHOLD FORM</p>
-            <p>Fields: Household Name, Description, etc.</p>
-            <p>need to determine how users will be invited to/join existing households</p>
-            <p>along with if there is password auth for each household, or if household admin needs to approve join requests</p>
-        </div>
+        <h3>Create a New Household</h3>
+        <form id="create-household-form">
+            <input type="text" name="household_name" placeholder="Household Name" required>
+            <input name="description" placeholder="Description (optional)"></input>
+            <input type="password" name="password" placeholder="Set Password (optional)">
+            <button type="submit">Create</button>
+        </form>
     </div>
 
+    <!-- Join household -->
+    <div class="management-section">
+        <h3>Join Existing Household</h3>
+        <form id="join-household-form">
+            <input type="text" name="join_code" placeholder="Enter Code or Household Name" required>
+            <input type="password" name="join_password" placeholder="Password (if any)">
+            <button type="submit">Join</button>
+        </form>
+    </div>
 </div>
+
+<script>
+    // --- HOOKS + FRONTEND SIMULATION ---
+    document.getElementById('create-household-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = e.target.household_name.value;
+        alert(`(Mock) Created household: ${name}`);
+        e.target.reset();
+    });
+
+    document.getElementById('join-household-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const code = e.target.join_code.value;
+        alert(`(Mock) Joining household: ${code}`);
+        e.target.reset();
+    });
+
+    document.querySelectorAll('.switch-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            alert(`(Mock) Switched to household ID ${id}`);
+        });
+    });
+</script>
 {% endblock %}

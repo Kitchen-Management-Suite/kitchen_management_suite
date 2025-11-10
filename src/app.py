@@ -39,6 +39,7 @@ from helpers.navbar_helper import (
 from blueprints.auth import auth_bp
 from blueprints.recipes import recipes_bp
 from blueprints.calorieTracker import calorie_tracker_bp
+from blueprints.pantry import pantry_bp
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -52,10 +53,12 @@ with app.app_context():
 sqlSession = get_session()
 flaskSession = session
 
-# register auth blueprint
+# register blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(recipes_bp)
+app.register_blueprint(pantry_bp)
 app.register_blueprint(calorie_tracker_bp)
+
 
 # register navbar w/ context processor (inject w/ existing variables)
 # refer to navbar_helper.py
