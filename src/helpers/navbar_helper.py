@@ -13,6 +13,7 @@ from flask import session, request
 from db.server import get_session
 from db.schema.member import Member
 from db.schema.household import Household
+from db.schema.user import User
 
 def get_current_household_id():
     """
@@ -50,7 +51,6 @@ def get_user_households():
     
     db_session = get_session()
     try:
-        # Get all households the user is a member of
         memberships = db_session.query(Member).filter_by(UserID=user_id).all()
         household_ids = [m.HouseholdID for m in memberships]
         
@@ -67,7 +67,41 @@ def get_user_households():
         db_session.close()
 
 
-def get_navbar_data(show_household_selector=False):
+def get_user_full_name():
+    """
+    Get the user's full name from the database
+    
+    Returns:
+        str: User's full name or username if name not available
+    """
+    if not session.get('logged_in'):
+        return 'User'
+    
+    user_id = session.get('user_id')
+    if not user_id:
+        return session.get('username', 'User')
+    
+    db_session = get_session()
+    try:
+        user = db_session.query(User).filter_by(UserID=user_id).first()
+        if user:
+            # If FirstName and LastName exist, use them
+            if user.FirstName and user.LastName:
+                return f"{user.FirstName} {user.LastName}"
+            # If only FirstName exists
+            elif user.FirstName:
+                return user.FirstName
+            else:
+                return user.Username
+        return session.get('username', 'User')
+    except Exception as e:
+        print(f"Error fetching user name: {e}")
+        return session.get('username', 'User')
+    finally:
+        db_session.close()
+
+
+def get_navbar_data(show_household_selector=True):
     """
     Get navbar data for the current user including household memberships
     
@@ -77,20 +111,21 @@ def get_navbar_data(show_household_selector=False):
     Returns:
         dict: Navbar configuration data for JavaScript
     """
-    # Get current endpoint
     current_endpoint = request.endpoint or 'index'
+    
     if not session.get('logged_in'):
         return {
             'isLoggedIn': False,
             'households': [],
             'currentHouseholdId': None,
             'showHouseholdSelector': False,
-            'currentEndpoint': current_endpoint
+            'currentEndpoint': current_endpoint,
+            'userName': 'User',
+            'username': 'username'
         }
     
     # Get user's households
     households = get_user_households()
-    # Get current household ID
     current_household_id = get_current_household_id()
     
     # If no household is selected but user has households, select the first one
@@ -107,31 +142,30 @@ def get_navbar_data(show_household_selector=False):
         for h in households
     ]
     
+    # Get user info
+    user_full_name = get_user_full_name()
+    username = session.get('username', 'username')
+    
     return {
         'isLoggedIn': True,
         'households': household_list,
         'currentHouseholdId': current_household_id,
         'showHouseholdSelector': show_household_selector,
-        'currentEndpoint': current_endpoint
+        'currentEndpoint': current_endpoint,
+        'userName': user_full_name,
+        'username': username
     }
 
 
 def inject_navbar_context():
     """
-    Flask context processor to inject 
+    Flask context processor to inject navbar data
     
     Returns:
         dict: Context variables for templates
     """
-    # Determine if household selector should show based on current route
     current_endpoint = request.endpoint or ''
-    
-    # Show household selector on these pages
     show_selector = True
-    # (
-    #     current_endpoint in ['kitchen', 'pantry', 'recipes'] or 
-    #     current_endpoint.startswith('recipes.')  # All recipes blueprint routes
-    # )
     
     return {
         'navbar_data': get_navbar_data(show_household_selector=show_selector),

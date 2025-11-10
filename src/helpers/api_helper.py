@@ -5,8 +5,9 @@ Author: Noah Yurasko
 Date-Created: 11/5/2025
 
 Description:
-    contains all the innerworkings of api calls to openfood facts api
-    including rate throttling
+    contains all the innerworkings of api calls to openfoodfacts api
+    Doucmentation found in docs/api
+    including rate throttling [TBD]
 
 Inputs:
     Active flask session & dot env file with the openfoodfacts_api_useragent attribute 
@@ -24,8 +25,15 @@ import openfoodfacts
 import json
 import requests
 
-openfoodfacts_api_useragent = os.getenv('openfoodfacts_api_useragent', 'openfoodfacts_api_useragent')
-api = openfoodfacts.API(user_agent=openfoodfacts_api_useragent, timeout = 30)
+openfoodfacts_api_useragent = os.getenv('openfoodfacts_api_useragent', None)
+USDAApiKey = os.getenv("USDAApiKey", None)
+api = openfoodfacts.API(user_agent=openfoodfacts_api_useragent, timeout = 30)##Consider getting rid of this and switching all to requests
+
+if openfoodfacts_api_useragent == None:
+    raise Exception("Could not find openFoodFacts api useragent")
+
+if USDAApiKey == None:
+    raise Exception("Could not find USDA api key")
 
 # def trottleApiBy(apiLimit):#Still being implemented
 #     """
@@ -50,16 +58,15 @@ api = openfoodfacts.API(user_agent=openfoodfacts_api_useragent, timeout = 30)
 #     return 0
 #     # if flaskSession
 
-def searchByStr(searchText, **kwargs):#Will Need to sanitize search later
+def searchByStr(searchText, **kwargs):#Will Need to sanitize search later#SUCH AS CHECK FOR EMPTY STRINGS, 
+    #Emptry strings from openfoodfacts prevent writing to database
     url = "https://world.openfoodfacts.org/cgi/search.pl"
-    defaultFields = ["generic_name_en", 
+    defaultFields = ["generic_name_en", #Not implemented
                      "image_front_small_url",
                      "ingredients_text_en", 
                      "no_nutrition_data", 
                      "nutrition_data",
                       "obsolete" ]
-    page_size = kwargs.get("page_size", 100)## We should move this into the try loop for production
-    page = kwargs.get("page", 1)
     params = {
         "search_terms": searchText,
         "search_simple": 1, 
@@ -73,7 +80,7 @@ def searchByStr(searchText, **kwargs):#Will Need to sanitize search later
     try: 
         response = requests.get(url, params=params)
         responseAsJson = response.json()
-        # with open("jasonTempSave", "w") as f:
+        # with open("jasonTempSave", "w") as f:#Used for testing somtimes
         #     json.dump(responseAsJson, f, indent=4) 
         return responseAsJson
     except Exception as ex:
@@ -81,10 +88,38 @@ def searchByStr(searchText, **kwargs):#Will Need to sanitize search later
         flash(ex, "error")
         return -1
 
-def searchByCode(code, **kwargs):
+def searchByCode(code, **kwargs):#Deprecated, need to change
     try:
-        rtn = api.product.get(code, fields=["code", "product_name"])
-        return rtn
+        # rtn = api.product.get(code, fields=["code", "product_name"])
+        return -1
     except:
         print("Exception in API Call")
         return -1
+
+def searchRawIngredient(name, **kwargs):
+    try: 
+        url =  "https://api.nal.usda.gov/fdc/v1/foods/search"
+        params = {
+            "query": name,
+            "api_key": USDAApiKey,
+            "pageNumber": kwargs.get("page", 1),
+            "pageSize": kwargs.get("page_size", 100),
+        }
+
+        rtn = requests.get(url, params=params)
+        responseAsJson = rtn.json()
+        return responseAsJson
+    except Exception as ex: 
+        print("Exception in USDA Api call")
+        print(ex)
+        return -1
+    
+#To do 
+# Write api throttler
+# Write conditionals for loading calorite track page
+#Finish styling very basic search page
+# # Write the ability to pull in anything else necessary (recipies etc)
+# IF POSSIBLE allow a view of multiple days
+#Running Bugs: 
+#Reloading the page after adding an item will add it twice
+#its with empty strings cannot be added to the database

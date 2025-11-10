@@ -5,24 +5,26 @@
 {% block content %}
 <h2>Pantry Dashboard</h2>
 
-<div id="household-info">
-    {% if current_household_id %}
-        <p>Current Household ID: {{ current_household_id }}</p>
-    {% else %}
-        <p>No household selected. Please select one from the dropdown above.</p>
-    {% endif %}
-</div>
+{% if current_household %}
+    <p><strong>Household:</strong> {{ current_household.HouseholdName }}</p>
+{% endif %}
 
-<div id="pantry-content">
-    <p>Pantry content will appear here...</p>
-</div>
+<div id="pantry-root"></div>
 {% endblock %}
 
 {% block extra_js %}
-<script type="module">
-    // Access current household data
-    const navbarData = window.navbarData;
-    console.log('Current household:', navbarData.currentHouseholdId);
-    
+<script>
+    window.pantryData = {{ pantry_items | tojson }};
 </script>
+<script type="module">
+    import { render, h } from "{{ url_for('static', filename='hook.js') }}";
+    import { PantryContainer } from "{{ url_for('static', filename='pantry.js') }}";
+    
+    const pantryData = window.pantryData || [];
+    render(h(PantryContainer, { pantryItems: pantryData }), document.getElementById('pantry-root'));
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='pantry.css') }}">
 {% endblock %}

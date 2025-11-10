@@ -21,21 +21,27 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from db.server import get_session
 from db.schema.user import User
+from helpers.validation_helper import validate_registration_data, validate_login_data
+from helpers.logging_helper import log_auth
 
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
-    """Handle user registration"""
+    """handle user registration"""
     if request.method == 'POST':
-        username = request.form.get('username')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        dob = request.form.get('dob')
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+        dob = request.form.get('dob', '')
         
-        # validate required fields
-        if not all([username, email, password, dob]):
-            flash('All fields are required', 'error')
+        validation_errors = validate_registration_data(username, email, password, dob)
+        
+        if validation_errors:
+            for field, error in validation_errors.items():
+                flash(f'{field.capitalize()}: {error}', 'error')
+            
+            log_auth(f"Registration failed - {username} ({email}) - validation errors", 'warning')
             return render_template('register.html')
         
         db_session = get_session()
@@ -47,6 +53,7 @@ def register():
             
             if existing_user:
                 flash('Username or email already exists', 'error')
+                log_auth(f"Registration failed - {username} ({email}) - already exists", 'warning')
                 return render_template('register.html')
             
             # hash password and create new user
@@ -63,12 +70,14 @@ def register():
             db_session.add(new_user)
             db_session.commit()
             
+            log_auth(f"Registration successful - {username} ({email})")
             flash('Registration successful! Please login.', 'success')
             return redirect(url_for('auth.login'))
             
         except Exception as e:
             db_session.rollback()
-            flash(f'Registration failed: {str(e)}', 'error')
+            log_auth(f"Registration error - {username} ({email}) - {str(e)}", 'error')
+            flash(f'Registration failed: An error occurred. Please try again.', 'error')
             return render_template('register.html')
         finally:
             db_session.close()
@@ -77,13 +86,18 @@ def register():
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    """Handle user login"""
+    """handle user login"""
     if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
         
-        if not all([email, password]):
-            flash('Email and password are required', 'error')
+        validation_errors = validate_login_data(email, password)
+        
+        if validation_errors:
+            for field, error in validation_errors.items():
+                flash(error, 'error')
+            
+            log_auth(f"Login failed - {email} - validation errors", 'warning')
             return render_template('login.html')
         
         db_session = get_session()
@@ -91,19 +105,21 @@ def login():
             user = db_session.query(User).filter(User.Email == email).first()
             
             if user and check_password_hash(user.Password, password):
-                # set session data
                 session['user_id'] = user.UserID
                 session['username'] = user.Username
                 session['logged_in'] = True
                 
+                log_auth(f"Login successful - {email}")
                 flash('Login successful!', 'success')
                 return redirect(url_for('index'))
             else:
+                log_auth(f"Login failed - {email} - invalid credentials", 'warning')
                 flash('Invalid email or password', 'error')
                 return render_template('login.html')
                 
         except Exception as e:
-            flash(f'Login failed: {str(e)}', 'error')
+            log_auth(f"Login error - {email} - {str(e)}", 'error')
+            flash(f'Login failed: An error occurred. Please try again.', 'error')
             return render_template('login.html')
         finally:
             db_session.close()
@@ -112,7 +128,10 @@ def login():
 
 @auth_bp.route('/logout')
 def logout():
-    """Handle user logout"""
+    """handle user logout"""
+    username = session.get('username', 'unknown')
+    log_auth(f"Logout - {username}")
+    
     session.clear()
     flash('Logged out successfully', 'success')
     return redirect(url_for('index'))
