@@ -22,12 +22,14 @@ function createDom(vnode) {
     return document.createTextNode(vnode);
 
   if (typeof vnode.type === "function") {
-    const component = { vnode, hooks: [], dom: null };
+    const component = { vnode, hooks: [], dom: null, rendered: null };
     currentComponent = component;
     hookIndex = 0;
     const rendered = vnode.type(vnode.props || {});
+    component.rendered = rendered;
     const dom = createDom(rendered);
     component.dom = dom;
+    dom.__component = component;
     currentComponent = null;
     return dom;
   }
@@ -74,25 +76,79 @@ function updateDom(dom, prevProps, nextProps) {
  * recursively patches all children and handles component re-rendering
  */
 function patch(dom, oldVNode, newVNode) {
-  if (!oldVNode) return createDom(newVNode);
+  if (!oldVNode) {
+    const prevComponent = currentComponent;
+    const prevHookIndex = hookIndex;
+    const result = createDom(newVNode);
+    currentComponent = prevComponent;
+    hookIndex = prevHookIndex;
+    return result;
+  }
   if (!newVNode) return document.createTextNode("");
-  if (isChanged(oldVNode, newVNode)) return createDom(newVNode);
+  if (isChanged(oldVNode, newVNode)) {
+    const prevComponent = currentComponent;
+    const prevHookIndex = hookIndex;
+    const result = createDom(newVNode);
+    currentComponent = prevComponent;
+    hookIndex = prevHookIndex;
+    return result;
+  }
 
   if (typeof newVNode.type === "function") {
+    const component = dom.__component || {
+      vnode: newVNode,
+      hooks: [],
+      dom: null,
+      rendered: null,
+    };
+    const oldRendered = component.rendered || null;
+    component.vnode = newVNode;
+    const prevComponent = currentComponent;
+    const prevHookIndex = hookIndex;
+    currentComponent = component;
+    hookIndex = 0;
     const rendered = newVNode.type(newVNode.props || {});
-    return patch(dom, oldVNode.rendered, rendered);
+    component.rendered = rendered;
+    const newDom = patch(dom, oldRendered, rendered);
+    component.dom = newDom;
+    newDom.__component = component;
+    currentComponent = prevComponent;
+    hookIndex = prevHookIndex;
+    return newDom;
   }
 
   updateDom(dom, oldVNode.props || {}, newVNode.props || {});
 
-  const childCount = Math.max(
-    oldVNode.children.length,
-    newVNode.children.length,
-  );
-  for (let i = 0; i < childCount; i++) {
-    const child = dom.childNodes[i];
-    const newChild = patch(child, oldVNode.children[i], newVNode.children[i]);
-    if (newChild !== child) dom.replaceChild(newChild, child);
+  const oldChildren = oldVNode.children || [];
+  const newChildren = newVNode.children || [];
+  const childCount = Math.max(oldChildren.length, newChildren.length);
+  
+  for (let i = childCount - 1; i >= 0; i--) {
+    const oldChild = oldChildren[i];
+    const newChildVNode = newChildren[i];
+    const existingChild = dom.childNodes[i];
+    
+    if (!newChildVNode && existingChild) {
+      // remove child if newVNode is null/undefined
+      dom.removeChild(existingChild);
+    } else if (newChildVNode && !existingChild) {
+      // add new child if it doesn't exist
+      const newChild = patch(null, null, newChildVNode);
+      if (newChild && newChild.nodeType !== undefined) {
+        // insert at the correct position
+        if (i < dom.childNodes.length) {
+          dom.insertBefore(newChild, dom.childNodes[i]);
+        } else {
+          dom.appendChild(newChild);
+        }
+      }
+    } else if (newChildVNode && existingChild) {
+      // patch existing child
+      const newChild = patch(existingChild, oldChild, newChildVNode);
+      if (newChild && newChild !== existingChild && newChild.nodeType !== undefined) {
+        dom.replaceChild(newChild, existingChild);
+      }
+    }
   }
   return dom;
 }

@@ -1,0 +1,87 @@
+#pantry-content {
+    margin-top: 20px;
+}
+
+.pantry-list {
+    list-style: none;
+    padding: 0;
+}
+
+.pantry-list li {
+    background: #f9f9f9;
+    margin: 10px 0;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.add-item-btn {
+    margin-bottom: 15px;
+    background-color: black;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.add-item-btn:hover {
+    background-color: #333;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    max-width: 400px;
+    width: 90%;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.modal-btn {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.modal-btn.manual {
+    background-color: black;
+    color: white;
+}
+
+.modal-btn.manual:hover {
+    background-color: #333;
+}
+
+.modal-btn.scan {
+    background-color: #ccc;
+    color: #666;
+    cursor: not-allowed;
+}
+

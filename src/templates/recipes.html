@@ -9,9 +9,9 @@
 {% block content %}
 <div class="household-header">
     <h2>Recipes{% if current_household %} - {{ current_household.HouseholdName }}{% endif %}</h2>
+    <div id="recipes-root"></div>
 </div>
 
-<!-- User Authored Recipes -->
 <div class="recipe-section">
     <div class="recipe-section-header">
         <h3>Authored</h3>
@@ -47,13 +47,11 @@
     </div>
     {% else %}
     <div class="empty-carousel">
-        <!-- URGENT NEED TO CREATE AND CONNECT TO PROPER FORM -->
-        <button>Create New Recipe</button>
+        <p>No recipes yet. Create your first recipe!</p>
     </div>
     {% endif %}
 </div>
 
-<!-- Household Recipes -->
 <div class="recipe-section">
     <div class="recipe-section-header">
         <h3>Household</h3>
@@ -150,5 +148,14 @@ function toggleExpanded(carouselId) {
         btn.innerHTML = 'Show Less';
     }
 }
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+    import { render, h } from "{{ url_for('static', filename='hook.js') }}";
+    import { RecipesContainer } from "{{ url_for('static', filename='recipes.js') }}";
+    
+    render(h(RecipesContainer), document.getElementById('recipes-root'));
 </script>
 {% endblock %}
