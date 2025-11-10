@@ -37,6 +37,7 @@ entity UserNutrition {
     Fiber
     Sugar
     Sodium
+    MealType
 }
 
 entity Role {

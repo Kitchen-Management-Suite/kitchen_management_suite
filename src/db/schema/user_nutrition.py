@@ -16,7 +16,7 @@ Outputs:
     The mapped `UserNutrition` class usable with SQLAlchemy sessions and __repr__ for debug
 """
 
-from sqlalchemy import Column, Integer, Float, Date, Time, ForeignKey
+from sqlalchemy import Column, Integer, Float, Date, Time, ForeignKey, String
 from sqlalchemy.orm import relationship
 from db.server import Base
 
@@ -26,6 +26,7 @@ class UserNutrition(Base):
 
     NutritionID = Column(Integer, primary_key=True, autoincrement=True)
     UserID = Column(Integer, ForeignKey('Users.UserID'), nullable=False)
+    # ItemName = Column(String(100))#WE NEED TO BE CAREFUL, ITEM NAME COULD BE HUGE
     Date = Column(Date, nullable=False)
     Time = Column(Time)
     CaloriesConsumed = Column(Integer)
@@ -36,7 +37,8 @@ class UserNutrition(Base):
     Fiber = Column(Float)
     Sugar = Column(Float)
     Sodium = Column(Float)  
-
+    # MealType = Column(String(10))#Right now this is string
+    #but in the future we should consider an ENUM value for faster look ups
     # relationship
     user = relationship("User", back_populates="nutrition_logs")
 

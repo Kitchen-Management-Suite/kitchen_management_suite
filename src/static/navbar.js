@@ -138,7 +138,11 @@ export function Navbar(props) {
           h('a', { 
             href: '/pantry', 
             class: isActive('pantry') ? 'active' : '' 
-          }, 'Pantry')
+          }, 'Pantry'),
+          h('a', {
+            href: '/calorieTracking',
+            class: isActive('calorieTracking') ? 'active' : ''
+          }, 'Track Calories')
         ),
 
         h('div', { class: 'sidebar-footer' },

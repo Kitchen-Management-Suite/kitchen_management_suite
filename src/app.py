@@ -23,8 +23,7 @@ from dotenv import load_dotenv
 
 # load environment variables
 load_dotenv()
-
-from db.server import engine, Base, init_database
+from db.server import engine, Base, init_database, get_session
 
 # schema imports
 from db.schema import adds, authors, holds, household, item, member, pantry, recipe, role, user_nutrition, user_profile, user
@@ -39,6 +38,7 @@ from helpers.navbar_helper import (
 # import blueprints
 from blueprints.auth import auth_bp
 from blueprints.recipes import recipes_bp
+from blueprints.calorieTracker import calorie_tracker_bp
 from blueprints.pantry import pantry_bp
 
 app = Flask(__name__)
@@ -49,10 +49,16 @@ with app.app_context():
     print("initializing database...")
     init_database()
 
+#Dstinguishing sessions for sqlAlchemy & flask 
+sqlSession = get_session()
+flaskSession = session
+
 # register blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(recipes_bp)
 app.register_blueprint(pantry_bp)
+app.register_blueprint(calorie_tracker_bp)
+
 
 # register navbar w/ context processor (inject w/ existing variables)
 # refer to navbar_helper.py
@@ -63,12 +69,28 @@ def inject_navbar():
 
 @app.route("/")
 def index():
-    """handle index route"""
-    if session.get('logged_in'):
+    """handle index route"""    
+    if flaskSession.get('logged_in'):
         return render_template("index.html")
     else:
         return render_template("public.html")
 
+##Enter End point here for 
+
+@app.route("/pantry")
+def pantry():
+    """handle pantry route"""
+    if not session.get('logged_in'):
+        flash('Please log in to access the pantry.', 'error')
+        return redirect(url_for('auth.login'))
+    
+    # check if user is in any households
+    households = get_user_households()
+    if not households:
+        flash('You need to join a household first.', 'error')
+        return redirect(url_for('index'))
+
+    return render_template("pantry.html")
 
 @app.route("/recipes")
 def recipes():
@@ -116,5 +138,15 @@ def manage_household():
     # NEED TO IMPLEMENT HOUSEHOLD CREATION AND JOIN FUNCTIONALITY
     return render_template('manage_household.html')
 
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
+#To do 
+# Write api throttler for java
+# Write conditionals for loading calorite track page
+#Finish styling very basic search page
+# # Write the ability to pull in anything else necessary (recipies etc)
+# IF POSSIBLE allow selection of mulitple days
+# - This will require automatically checking and creating data for days that dont exist
