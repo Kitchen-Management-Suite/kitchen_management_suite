@@ -18,10 +18,8 @@ export function Navbar(props) {
   } = props;
 
   const isActive = (endpoint) => {
-    if (endpoint === 'recipes') {
-      return currentEndpoint === 'recipes' || currentEndpoint.startsWith('recipes.');
-    }
-    return currentEndpoint === endpoint;
+    console.log(currentEndpoint, endpoint);
+    return currentEndpoint.includes(endpoint);
   };
 
   const switchHousehold = (e) => {
