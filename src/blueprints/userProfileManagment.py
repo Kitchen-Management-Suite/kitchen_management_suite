@@ -1,0 +1,36 @@
+"""
+File: calorieTracking.py
+File-Path: src/blueprints/calorieTracker.py
+Author: Noah Yurasko
+Date-Created: 11/12/2025
+
+Description:
+    Blueprint for the User Profile Page
+
+Inputs:
+    flask request data
+    database session
+
+Outputs:
+    pages and backend implementation for userProfile
+"""
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash
+from db.server import get_session
+from db.schema import UserProfile
+
+sqlSession = get_session()
+flaskSession = session
+manage_user_profile_bp = Blueprint("userProfileManagement", __name__)
+
+@manage_user_profile_bp.route("/manage_user_profile", methods = ["GET", "POST"])
+def manage_user_profile():
+    user_id = flaskSession.get("user_id")
+
+    if not session.get('logged_in'):
+        flash('Please login to view recipes', 'error')
+        return redirect(url_for('auth.login'))
+    
+    userProfileData = sqlSession.query(UserProfile).filter(UserProfile.UserID == user_id).first()
+
+     
+    return render_template("manage_user_profile.html", userProfileData = userProfileData)
