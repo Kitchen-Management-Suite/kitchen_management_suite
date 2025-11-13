@@ -11,18 +11,74 @@
     --gap: 15px;
     --margin: 20px;
     --content-max-width: 950px;
+
+    /* Color Variables */
+    /* Primary Colors */
+    --color-primary: #000;
+    --color-white: #fff;
+
+    /* Gray Scale */
+    --color-bg-main: #f5f5f5;
+    --color-bg-light: #f9f9f9;
+    --color-bg-secondary: #f0f0f0;
+    --color-bg-tertiary: #e0e0e0;
+    --color-border: #ddd;
+    --color-border-light: #e0e0e0;
+    --color-border-medium: #bbb;
+    --color-border-dark: #999;
+    --color-text-muted: #888;
+    --color-text-secondary: #666;
+    --color-text-tertiary: #555;
+    --color-hover: #333;
+    --color-disabled: #ccc;
+
+    /* Semantic Colors */
+    --color-error: #c33;
+    --color-error-bg: #fee;
+    --color-error-border: #fcc;
+    --color-success: #3c3;
+    --color-success-bg: #efe;
+    --color-success-border: #cfc;
+    --color-warning: #f90;
+    --color-info: #1976d2;
+    --color-info-bg: #e3f2fd;
+    --color-info-border: #bbdefb;
+
+    /* Alert Colors */
+    --color-alert-error-bg: #fee;
+    --color-alert-error-border: #fcc;
+    --color-alert-error-text: #c33;
+    --color-alert-success-bg: #e8f5e9;
+    --color-alert-success-border: #c8e6c9;
+    --color-alert-success-text: #2e7d32;
+    --color-alert-warning-bg: #fff3cd;
+    --color-alert-warning-border: #ffeaa7;
+    --color-alert-warning-text: #856404;
+    --color-alert-info-bg: #e3f2fd;
+    --color-alert-info-border: #bbdefb;
+    --color-alert-info-text: #1976d2;
+
+    /* Shadows */
+    --shadow-modal-backdrop: rgba(0, 0, 0, 0.5);
+    --shadow-modal-content: rgba(0, 0, 0, 0.15);
+    --shadow-card: rgba(0, 0, 0, 0.1);
+    --shadow-container: rgba(0, 0, 0, 0.05);
+
+    /* Purple accent (used in recipes) */
+    --color-purple: #7b1fa2;
+    --color-purple-bg: #f3e5f5;
 }
 
 body {
     font-family: Arial, sans-serif;
-    background: #f5f5f5;
-    color: #000;
+    background: var(--color-bg-main);
+    color: var(--color-primary);
     font-size: 16px;
     line-height: 1.5;
 }
 
 body.has-sidebar {
-    background: #f5f5f5;
+    background: var(--color-bg-main);
 }
 
 body.has-sidebar .container {
@@ -32,20 +88,20 @@ body.has-sidebar .container {
     top: var(--margin);
     bottom: var(--margin);
     width: var(--content-max-width);
-    background: white;
-    border: 1px solid #ddd;
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     padding: 2.5rem;
     overflow-y: auto;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 4px var(--shadow-container);
 }
 
 body:not(.has-sidebar) .container {
     max-width: 80ch;
     margin: 2rem auto;
     padding: 1.5rem;
-    background: white;
-    border: 1px solid #ddd;
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
     border-radius: 8px;
 }
 
@@ -56,22 +112,22 @@ body.has-sidebar footer {
 footer {
     padding: 1rem;
     text-align: center;
-    border-top: 1px solid #ddd;
+    border-top: 1px solid var(--color-border);
     margin-top: auto;
 }
 
 h1 {
-    color: black;
+    color: var(--color-primary);
     margin-bottom: 1rem;
 }
 
 h2 {
-    color: black;
+    color: var(--color-primary);
     margin-bottom: 1rem;
 }
 
 h3 {
-    color: black;
+    color: var(--color-primary);
     margin-bottom: 1rem;
 }
 
@@ -97,7 +153,7 @@ select {
     width: 100%;
     padding: 0.75rem;
     margin-bottom: 1rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     box-sizing: border-box;
     font-size: 1rem;
@@ -107,8 +163,8 @@ select {
 button {
     width: 100%;
     padding: 0.75rem;
-    background-color: black;
-    color: white;
+    background-color: var(--color-primary);
+    color: var(--color-white);
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -117,7 +173,7 @@ button {
 }
 
 button:hover {
-    background-color: #333;
+    background-color: var(--color-hover);
 }
 
 /* Alerts */
@@ -129,38 +185,38 @@ button:hover {
 }
 
 .alert-error {
-    background-color: #fee;
-    border: 1px solid #fcc;
-    color: #c33;
+    background-color: var(--color-alert-error-bg);
+    border: 1px solid var(--color-alert-error-border);
+    color: var(--color-alert-error-text);
 }
 
 .alert-success {
-    background-color: #efe;
-    border: 1px solid #cfc;
-    color: #3c3;
+    background-color: var(--color-alert-success-bg);
+    border: 1px solid var(--color-alert-success-border);
+    color: var(--color-alert-success-text);
 }
 
 /* Validation */
 .validation-error {
-    color: #c33;
+    color: var(--color-error);
     font-size: 0.875rem;
     margin-top: -0.75rem;
     margin-bottom: 1rem;
 }
 
 .validation-success {
-    color: #3c3;
+    color: var(--color-success);
     font-size: 0.875rem;
     margin-top: -0.75rem;
     margin-bottom: 1rem;
 }
 
 .input-error {
-    border-color: #c33 !important;
+    border-color: var(--color-error) !important;
 }
 
 .input-success {
-    border-color: #3c3 !important;
+    border-color: var(--color-success) !important;
 }
 
 .password-strength {
@@ -169,9 +225,9 @@ button:hover {
     font-size: 0.875rem;
 }
 
-.strength-weak { color: #c33; }
-.strength-medium { color: #f90; }
-.strength-strong { color: #3c3; }
+.strength-weak { color: var(--color-error); }
+.strength-medium { color: var(--color-warning); }
+.strength-strong { color: var(--color-success); }
 
 /* Quick Actions */
 .quick-actions {
@@ -183,7 +239,7 @@ button:hover {
 
 .action-card {
     padding: 1rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     text-align: center;
     text-decoration: none;
     color: inherit;
@@ -193,8 +249,8 @@ button:hover {
 }
 
 .action-card:hover {
-    border-color: black;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-color: var(--color-primary);
+    box-shadow: 0 2px 8px var(--shadow-card);
 }
 
 .action-icon {
@@ -207,12 +263,12 @@ button:hover {
 
 .action-desc {
     font-size: 0.875rem;
-    color: #666;
+    color: var(--color-text-secondary);
 }
 
 /* Links */
 a {
-    color: black;
+    color: var(--color-primary);
     text-decoration: underline;
 }
 
