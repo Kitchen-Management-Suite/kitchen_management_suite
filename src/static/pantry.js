@@ -13,7 +13,7 @@ function AddItemModal({ isOpen, onClose }) {
     },
     h(
       "div",
-      { class: "modal-content" },
+      { class: "modal-content modal-md" },
       h("h3", null, "Add Item to Pantry"),
       h(
         "div",

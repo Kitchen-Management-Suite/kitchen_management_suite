@@ -24,7 +24,7 @@ from db.schema.recipe import Recipe
 from db.schema.authors import Authors
 from db.schema.holds import Holds
 from sqlalchemy import and_, func
-
+from datetime import datetime, date
 recipes_bp = Blueprint('recipes', __name__)
 
 @recipes_bp.route('/recipes')
@@ -170,5 +170,116 @@ def recipe_detail(recipe_id):
     except Exception as e:
         flash(f'Error loading recipe: {str(e)}', 'error')
         return redirect(url_for('recipes.recipes'))
+    finally:
+        db_session.close()
+
+@recipes_bp.route('/recipes/add', methods=['POST'])
+def add_recipe():
+    """Add a new custom recipe"""
+    if not session.get('logged_in'):
+        return jsonify({'success': False, 'error': 'Not logged in'}), 401
+    
+    user_id = session.get('user_id')
+    
+    db_session = get_session()
+    
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        if not data.get('recipeName'):
+            return jsonify({'success': False, 'error': 'Recipe name is required'}), 400
+        
+        # Validate household selection
+        selected_household_ids = data.get('householdIds', [])
+        if not selected_household_ids or len(selected_household_ids) == 0:
+            return jsonify({'success': False, 'error': 'Please select at least one household'}), 400
+        
+        # Verify user has access to selected households
+        user_households = db_session.query(Member).filter(
+            Member.UserID == user_id,
+            Member.HouseholdID.in_(selected_household_ids)
+        ).all()
+        
+        user_household_ids = [m.HouseholdID for m in user_households]
+        
+        # Check if all selected households are valid
+        invalid_households = set(selected_household_ids) - set(user_household_ids)
+        if invalid_households:
+            return jsonify({'success': False, 'error': 'You do not have access to some selected households'}), 403
+        
+        # Build ingredients dictionary in Fathub format
+        ingredients = {}
+        for i, ing in enumerate(data.get('ingredients', [])):
+            if ing.get('name'):
+                key = ing['name'].lower().replace(' ', '')
+                ingredients[key] = {
+                    'id': ing['name'].lower().replace(' ', '-'),
+                    'amount': float(ing.get('amount', 1)) if ing.get('amount') else 1,
+                    'unit': ing.get('unit', 'piece')
+                }
+        
+        # Build recipe body
+        recipe_body = {
+            'name': data['recipeName'],
+            'author': f"{session.get('username', 'User')}",
+            'created': str(date.today()),
+            'serves': int(data.get('serves', 1)) if data.get('serves') else 1,
+            'preptime': int(data.get('preptime', 0)) if data.get('preptime') else 0,
+            'cooktime': int(data.get('cooktime', 0)) if data.get('cooktime') else 0,
+            'ingredients': ingredients,
+            'instructions': data.get('instructions', []),
+            'cuisine': data.get('cuisine', ''),
+            'course': data.get('course', 'main course')
+        }
+        
+        # Create recipe
+        new_recipe = Recipe(
+            RecipeName=data['recipeName'],
+            RecipeBody=recipe_body,
+            Source='custom',
+            IsGlobal=False
+        )
+        db_session.add(new_recipe)
+        db_session.flush()
+        
+        # Add to Authors and Holds tables for each selected household
+        for household_id in selected_household_ids:
+            # Add to Authors table
+            author_entry = Authors(
+                UserID=user_id,
+                HouseholdID=household_id,
+                RecipeID=new_recipe.RecipeID,
+                DateAdded=date.today(),
+                IsCustom=True
+            )
+            db_session.add(author_entry)
+            
+            # Add to Holds table so it appears in household recipes
+            holds_entry = Holds(
+                HouseholdID=household_id,
+                RecipeID=new_recipe.RecipeID
+            )
+            db_session.add(holds_entry)
+        
+        db_session.commit()
+        
+        household_names = db_session.query(Household.HouseholdName).filter(
+            Household.HouseholdID.in_(selected_household_ids)
+        ).all()
+        household_names_list = [name[0] for name in household_names]
+        
+        flash(f"Recipe added to {len(selected_household_ids)} household(s): {', '.join(household_names_list)}", 'success')
+
+        return jsonify({
+            'success': True,
+            'recipe_id': new_recipe.RecipeID,
+            'message': f'Recipe added to {len(selected_household_ids)} household(s): {", ".join(household_names_list)}'
+        })
+        
+    except Exception as e:
+        db_session.rollback()
+        print(f"Error adding recipe: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db_session.close()

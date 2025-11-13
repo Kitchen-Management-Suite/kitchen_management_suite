@@ -11,7 +11,7 @@
 }
 
 .hero p {
-    color: #555;
+    color: var(--color-text-tertiary);
     margin-bottom: 1.5rem;
 }
 
@@ -32,12 +32,12 @@
 }
 
 .btn-primary:hover {
-    background-color: #333;
+    background-color: var(--color-hover);
 }
 
 .login-link {
     margin-top: 1rem;
-    color: #555;
+    color: var(--color-text-tertiary);
 }
 
 .login-link a {
@@ -54,7 +54,7 @@
 
 .feature {
     padding: 1rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     text-align: center;
 }
 
