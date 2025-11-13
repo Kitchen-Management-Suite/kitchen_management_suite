@@ -2,15 +2,25 @@
 
 {% block title %}KMS | User Profile {% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='userProfile.css') }}">
+{% endblock %}
+
 {% block content %}
-<h2> User Profile </h2>
+<h2 class = "header-style"> User Profile </h2>
 
 
-{{userProfileData}}
+<form class = "user-settings-container">
+    <h3> Calorie Goal </h3> 
+    <div class = "single-users-settings-container ">
+        <input class = "user-settings-input" type = "text" disabled= "true" value = "3000"> 
+        <button class = "user-settings-edit"> Edit</button>
+    </div>
+    <input class = "save-changes-btn" type="submit" value = "Save Changes">
+</form>
+<!-- {{userProfileData}} -->
 
 
 {% endblock %}
 
-<!-- {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='') }}">
-{% endblock %} -->
+
