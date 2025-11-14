@@ -153,9 +153,18 @@ function toggleExpanded(carouselId) {
 
 {% block extra_js %}
 <script type="module">
-    import { render, h } from "{{ url_for('static', filename='hook.js') }}";
     import { RecipesContainer } from "{{ url_for('static', filename='recipes.js') }}";
     
-    render(h(RecipesContainer), document.getElementById('recipes-root'));
+    const householdData = {
+        userHouseholds: [
+            {% for household in user_households %}
+            { id: {{ household.HouseholdID }}, name: "{{ household.HouseholdName }}" }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        currentHouseholdId: {{ current_household_id | tojson }}
+    };
+    
+    const container = RecipesContainer(householdData);
+    document.getElementById('recipes-root').appendChild(container);
 </script>
 {% endblock %}

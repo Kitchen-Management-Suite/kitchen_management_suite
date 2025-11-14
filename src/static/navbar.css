@@ -1,12 +1,5 @@
 /* navbar.css */
 
-:root {
-    --sidebar-width: 250px;
-    --gap: 15px;
-    --margin: 20px;
-    --content-max-width: 950px;
-}
-
 .mobile-burger {
     display: none;
 }
@@ -17,19 +10,19 @@
     top: var(--margin);
     bottom: var(--margin);
     width: var(--sidebar-width);
-    background: white;
-    border: 1px solid #ddd;
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 4px var(--shadow-container);
 }
 
 /* Profile Section */
 .profile-section {
     padding: 1.5rem 1rem;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--color-border-light);
     flex-shrink: 0;
 }
 
@@ -44,20 +37,20 @@
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    background: #f0f0f0;
+    background: var(--color-bg-secondary);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
     font-weight: bold;
-    color: #666;
+    color: var(--color-text-secondary);
     cursor: pointer;
     transition: background 0.2s;
     flex-shrink: 0;
 }
 
 .profile-icon:hover {
-    background: #e0e0e0;
+    background: var(--color-bg-tertiary);
 }
 
 .profile-info {
@@ -68,7 +61,7 @@
 .profile-name {
     font-weight: bold;
     font-size: 1rem;
-    color: #000;
+    color: var(--color-primary);
     margin: 0 0 0.15rem 0;
     white-space: nowrap;
     overflow: hidden;
@@ -78,7 +71,7 @@
 
 .profile-username {
     font-size: 0.875rem;
-    color: #888;
+    color: var(--color-text-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -93,10 +86,10 @@
     left: 0;
     right: 0;
     margin-top: 0.5rem;
-    background: white;
-    border: 1px solid #ddd;
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
     border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px var(--shadow-modal-content);
     display: none;
     z-index: 1001;
     overflow: hidden;
@@ -110,14 +103,14 @@
     display: block;
     padding: 0.75rem 1rem;
     text-decoration: none;
-    color: #000;
+    color: var(--color-primary);
     font-size: 0.9rem;
     transition: background 0.15s;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--color-bg-secondary);
 }
 
 .profile-dropdown a.logout-btn {
-    color: red;
+    color: var(--color-error);
 }
 
 .profile-dropdown a:last-child {
@@ -125,13 +118,13 @@
 }
 
 .profile-dropdown a:hover {
-    background: #f9f9f9;
+    background: var(--color-bg-light);
 }
 
 /* Household Selector */
 .household-selector {
     padding: 1rem;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--color-border-light);
     flex-shrink: 0;
 }
 
@@ -140,7 +133,7 @@
     font-weight: bold;
     font-size: 0.875rem;
     margin: 0 0 0.5rem 0;
-    color: #333;
+    color: var(--color-hover);
 }
 
 .household-selector-row {
@@ -152,35 +145,35 @@
 .household-selector select {
     flex: 1;
     padding: 0.5rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     font-size: 0.9rem;
-    background: white;
+    background: var(--color-white);
     cursor: pointer;
     transition: border-color 0.2s;
     height: 36px;
 }
 
 .household-selector select:hover {
-    border-color: #999;
+    border-color: var(--color-border-dark);
 }
 
 .household-selector select:focus {
     outline: none;
-    border-color: #000;
+    border-color: var(--color-primary);
 }
 
 .household-add-btn {
     width: 36px;
     height: 36px;
-    background: white;
-    border: 1px solid #ddd;
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
     text-decoration: none;
-    color: #000;
+    color: var(--color-primary);
     font-size: 1.5rem;
     line-height: 1;
     transition: all 0.2s;
@@ -188,16 +181,16 @@
 }
 
 .household-add-btn:hover {
-    background: #000;
-    color: white;
-    border-color: #000;
+    background: var(--color-primary);
+    color: var(--color-white);
+    border-color: var(--color-primary);
 }
 
 .household-create-btn {
     display: block;
     padding: 0.5rem 1rem;
-    background: #000;
-    color: white;
+    background: var(--color-primary);
+    color: var(--color-white);
     text-align: center;
     text-decoration: none;
     border-radius: 4px;
@@ -209,7 +202,7 @@
 }
 
 .household-create-btn:hover {
-    background: #333;
+    background: var(--color-hover);
 }
 
 /* Navigation Links */
@@ -226,19 +219,19 @@
     padding: 0.75rem 1rem;
     margin-bottom: 0.5rem;
     text-decoration: none;
-    color: #000;
+    color: var(--color-primary);
     font-size: 1rem;
     border-radius: 4px;
     transition: background 0.2s;
 }
 
 .nav-links a:hover {
-    background: #f0f0f0;
+    background: var(--color-bg-secondary);
 }
 
 .nav-links a.active {
-    background: #000;
-    color: white;
+    background: var(--color-primary);
+    color: var(--color-white);
     font-weight: bold;
 }
 
@@ -251,8 +244,8 @@
     padding: 1rem;
     text-align: center;
     font-size: 0.8rem;
-    color: #888;
-    border-top: 1px solid #e0e0e0;
+    color: var(--color-text-muted);
+    border-top: 1px solid var(--color-border-light);
     margin-top: auto;
     flex-shrink: 0;
 }
@@ -267,8 +260,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 1rem 2rem;
-    background: white;
-    border-bottom: 1px solid #ddd;
+    background: var(--color-white);
+    border-bottom: 1px solid var(--color-border);
 }
 
 .public-nav strong {
@@ -290,8 +283,8 @@
 
 .public-nav .nav-links a.active {
     background: transparent;
-    color: #000;
+    color: var(--color-primary);
     font-weight: bold;
-    border-bottom: 2px solid #000;
+    border-bottom: 2px solid var(--color-primary);
     border-radius: 0;
 }
