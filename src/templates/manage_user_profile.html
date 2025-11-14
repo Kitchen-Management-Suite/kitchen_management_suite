@@ -9,15 +9,32 @@
 {% block content %}
 <h2 class = "header-style"> User Profile </h2>
 
-
 <form class = "user-settings-container">
-    <h3> Calorie Goal </h3> 
+
+    {% for key, value in userProfileData.items() %}
+    <h3> {{key}} </h3> 
     <div class = "single-users-settings-container ">
-        <input class = "user-settings-input" type = "text" disabled= "true" value = "3000"> 
+        <input class = "user-settings-input" type = "text" disabled= "true" value = {{value}}> 
         <button class = "user-settings-edit"> Edit</button>
     </div>
+    {% endfor %}
+
     <input class = "save-changes-btn" type="submit" value = "Save Changes">
 </form>
+
+<script defer> 
+    function editValue(self){
+        console.log(self);
+    }
+    btns = document.getElementsByClassName("user-settings-input");
+    inputs = document.getElementsByClassName("user-settings-edit")
+
+    index = 0;
+    btns.array.forEach(buttton => {
+        buttton.onclick = editValue();
+    });
+
+</script>
 <!-- {{userProfileData}} -->
 
 

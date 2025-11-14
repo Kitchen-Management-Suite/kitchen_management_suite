@@ -32,5 +32,12 @@ def manage_user_profile():
     
     userProfileData = sqlSession.query(UserProfile).filter(UserProfile.UserID == user_id).first()
 
+    usableUserProfile = {"Calorie Goal":userProfileData.CalorieGoal,
+                         "Height": userProfileData.Height,##Passing data as dict so jira can be used to not repeat html
+                         "Weight": userProfileData.Weight,
+                         "Allergies": userProfileData.Allergies,
+                         "DietaryPreferences": userProfileData.DietaryPreferences}
+    
+    print(dir(userProfileData))
      
-    return render_template("manage_user_profile.html", userProfileData = userProfileData)
+    return render_template("manage_user_profile.html", userProfileData = usableUserProfile)
