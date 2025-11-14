@@ -31,20 +31,26 @@
         toBeFocoused.setSelectionRange(textLength, textLength);
     }
     
+    function beforeUnloadHandler(event) {
+        var confirmationMessage = 'Are you sure you want to leave?';
+        event.returnValue = confirmationMessage;
+        return confirmationMessage;
+    }
+
     function updateSubmitBtn(){
         allBtns = document.querySelectorAll(".user-settings-input");
         submit = document.getElementById("submitChanges")
         flag = false
         allBtns.forEach(btnElement => {
-            if (btnElement.disabled == false){
-                submit.removeAttribute("disabled");
-                submitstyle = "background-color: aquamarine;"
-                flag = true;
-                return;
-            }
+            if (btnElement.disabled == false) flag = true;
         });
         if (flag == false){
+            window.removeEventListener("beforeunload", beforeUnloadHandler)
             submit.setAttribute("disabled", "");
+        }else{
+            
+            window.addEventListener("beforeunload", beforeUnloadHandler)
+            submit.removeAttribute("disabled");
         }
     }
 
