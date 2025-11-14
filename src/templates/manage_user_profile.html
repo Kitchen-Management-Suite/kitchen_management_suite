@@ -14,26 +14,59 @@
     {% for key, value in userProfileData.items() %}
     <h3> {{key}} </h3> 
     <div class = "single-users-settings-container ">
-        <input class = "user-settings-input" type = "text" disabled= "true" value = {{value}}> 
-        <button class = "user-settings-edit"> Edit</button>
+        <input class = "user-settings-input" type = "text" disabled= "true" value = {{value}} defaultval = {{value}}> 
+        <button class = "user-settings-edit" type = "button" onclick="toggleProfileSetting(this, '{{value}}')">Edit</button>
     </div>
     {% endfor %}
 
-    <input class = "save-changes-btn" type="submit" value = "Save Changes">
+    <input id = submitChanges disabled class = "save-changes-btn" type="submit" value = "Save Changes" >
 </form>
 
 <script defer> 
-    function editValue(self){
-        console.log(self);
+    editedElements = Array(parseInt("{{userProfileData|length}}")).fill(false)
+
+    function focusCursor(toBeFocoused){//Allows cursor to focus at the end of the newly selected box
+        toBeFocoused.focus();
+        textLength = toBeFocoused.value.length;
+        toBeFocoused.setSelectionRange(textLength, textLength);
     }
-    btns = document.getElementsByClassName("user-settings-input");
-    inputs = document.getElementsByClassName("user-settings-edit")
+    
+    function updateSubmitBtn(){
+        allBtns = document.querySelectorAll(".user-settings-input");
+        submit = document.getElementById("submitChanges")
+        flag = false
+        allBtns.forEach(btnElement => {
+            if (btnElement.disabled == false){
+                submit.removeAttribute("disabled");
+                submitstyle = "background-color: aquamarine;"
+                flag = true;
+                return;
+            }
+        });
+        if (flag == false){
+            submit.setAttribute("disabled", "");
+        }
+    }
 
-    index = 0;
-    btns.array.forEach(buttton => {
-        buttton.onclick = editValue();
-    });
-
+    function toggleProfileSetting(btnElement, defaultVal){
+        inptSection = btnElement.parentElement.getElementsByClassName("user-settings-input")[0];
+        // console.log(inptSection.disabled == true);
+        console.log(defaultVal)
+        if (inptSection.disabled == true){
+            inptSection.disabled = false;
+            inptSection.style.opacity = "100%"
+            btnElement.innerHTML = "Discard"
+            focusCursor(inptSection)
+            console.log("Button Enabled")
+        }else{
+             inptSection.disabled = true;
+             inptSection.style.opacity = "50%"
+             inptSection.value = defaultVal
+             btnElement.innerHTML = "Edit"
+             console.log("Button Disabled")
+        } 
+        updateSubmitBtn()
+    }
 </script>
 <!-- {{userProfileData}} -->
 
