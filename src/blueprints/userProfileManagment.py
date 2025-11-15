@@ -30,14 +30,27 @@ def manage_user_profile():
         flash('Please login to view recipes', 'error')
         return redirect(url_for('auth.login'))
     
+    if request.method == "POST":
+        print("KAL", request.form["Calorie"])
+        try:
+            userProfileData = sqlSession.query(UserProfile).filter(UserProfile.UserID == user_id).first()
+            sqlSession.commit()
+            raise Exception("Test")
+        except Exception as ex:
+            sqlSession.rollback()
+        finally:
+            sqlSession.close()
+
     userProfileData = sqlSession.query(UserProfile).filter(UserProfile.UserID == user_id).first()
+    allUnits = {"Metric": 1, "Imperial": 1}
 
     usableUserProfile = {"Calorie Goal":userProfileData.CalorieGoal,
                          "Height": userProfileData.Height,##Passing data as dict so jira can be used to not repeat html
                          "Weight": userProfileData.Weight,
                          "Allergies": userProfileData.Allergies,
-                         "DietaryPreferences": userProfileData.DietaryPreferences}
+                         "DietaryPreferences": userProfileData.DietaryPreferences,
+                         "Units": "Metric"}
     
     print(dir(userProfileData))
      
-    return render_template("manage_user_profile.html", userProfileData = usableUserProfile)
+    return render_template("manage_user_profile.html", userProfileData = usableUserProfile, allUnits = allUnits)

@@ -9,17 +9,27 @@
 {% block content %}
 <h2 class = "header-style"> User Profile </h2>
 
-<form class = "user-settings-container">
+<form class = "user-settings-container" action = "/manage_user_profile" method = "post">
 
     {% for key, value in userProfileData.items() %}
-    <h3> {{key}} </h3> 
-    <div class = "single-users-settings-container ">
-        <input class = "user-settings-input" type = "text" disabled= "true" value = {{value}} defaultval = {{value}}> 
-        <button class = "user-settings-edit" type = "button" onclick="toggleProfileSetting(this, '{{value}}')">Edit</button>
-    </div>
-    {% endfor %}
-
-    <input id = submitChanges disabled class = "save-changes-btn" type="submit" value = "Save Changes" >
+        <h3> {{key}} </h3>
+        {% if key != "Units" %} 
+            <div class = "single-users-settings-container ">
+                <input class = "user-settings-input" type = "text" disabled= "true" value = {{value}} name = {{key}}> 
+                <button class = "user-settings-edit" type = "button" onclick="toggleProfileSetting(this, '{{value}}')">Edit</button>
+            </div>
+        {% else %}
+            <div class = "single-users-settings-container ">
+                <select class = "user-settings-input" name = "Units" disabled>
+                {%for unit, conversion in allUnits.items() %}
+                    <option value = "{{conversion}}">{{unit}}</option>
+                {% endfor %}
+                </select>  
+                <button class = "user-settings-edit" type = "button" onclick="toggleProfileSetting(this, '{{unit}}')">Edit</button>
+            </div>
+        {% endif %}
+     {% endfor %}
+    <input id = submitChanges disabled class = "save-changes-btn" type="submit" value = "Save Changes" onclick="allowLeave()">
 </form>
 
 <script defer> 
@@ -35,6 +45,10 @@
         var confirmationMessage = 'Are you sure you want to leave?';
         event.returnValue = confirmationMessage;
         return confirmationMessage;
+    }
+
+    function allowLeave(){
+        window.removeEventListener("beforeunload", beforeUnloadHandler)
     }
 
     function updateSubmitBtn(){
@@ -57,7 +71,6 @@
     function toggleProfileSetting(btnElement, defaultVal){
         inptSection = btnElement.parentElement.getElementsByClassName("user-settings-input")[0];
         // console.log(inptSection.disabled == true);
-        console.log(defaultVal)
         if (inptSection.disabled == true){
             inptSection.disabled = false;
             inptSection.style.opacity = "100%"
