@@ -82,12 +82,9 @@ def addToLog(UserNutrition):
 def calorieTracking():#KNOWN BUG - reloading this page after adding an item will add it to the database twice :/ fix later
     user_id = flaskSession.get("user_id")
     
-    flash('Please login to view recipes', 'error')
-    return redirect(url_for('auth.login'))
-
-    if not user_id:### Need to unit test
-        flash("User Not Found", "error")
-        return render_template('index')
+    if not user_id:
+        flash('Please login to view Calorie Tracker', 'error')
+        return redirect(url_for('auth.login'))
     
     now = datetime.now() 
     date = now.date()

@@ -31,10 +31,24 @@ def manage_user_profile():
         return redirect(url_for('auth.login'))
     
     userProfileData = sqlSession.query(UserProfile).filter(UserProfile.UserID == user_id).first()
-    #NEED TO HANDLE CASE WHERE THERE IS NO PROFILE YET CREATED
+    if not userProfileData:#Handling new profile
+        print("No user profile yet, creating blank slate")
+        newProfile = UserProfile(CalorieGoal = "N/A",
+                                 Height = "N/A",
+                                 Weight = "N/A",
+                                 DietaryPreferences = "None",
+                                 Allergies = "Allergies")
+        try:
+            sqlSession.add(newProfile)
+            sqlSession.commit()
+        except:
+            flash('Error In generating defualt profile', 'error')
+            sqlSession.rollback()
+        finally:
+            sqlSession.close()
+
     if request.method == "POST":
-        print("KAL", request.form["Calorie"])
-        try:#NEED TO DO SANITIZATION HERE
+        try:#Could do sanitization here, but invalid responses are automaically handled by this try, so its not super important
             userProfileData.CalorieGoal =  request.form["Calorie"] if "Calorie" in request.form else userProfileData.CalorieGoal
             userProfileData.Height =  request.form["Height"] if "Height" in request.form else userProfileData.Height
             userProfileData.Weight =  request.form["Weight"] if "Weight" in request.form else userProfileData.Weight
@@ -42,12 +56,8 @@ def manage_user_profile():
             userProfileData.Allergies =  request.form["Allergies"] if "Allergies" in request.form else userProfileData.Allergies
             sqlSession.commit()
         except Exception as ex:
-            print("EXCEPTION")
-            print(ex)
             flash('Error In Updating Profile', 'error')
             sqlSession.rollback()
-
-            return redirect(url_for('index'))
         finally:
             sqlSession.close()    
 
