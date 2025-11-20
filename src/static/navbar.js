@@ -7,14 +7,16 @@
 import { h } from './hook.js';
 
 export function Navbar(props) {
-  const { 
-    isLoggedIn = false, 
+  const {
+    isLoggedIn = false,
     households = [],
     currentHouseholdId = null,
     showHouseholdSelector = true,
     currentEndpoint = 'index',
     userName = 'User',
-    username = 'username'
+    username = 'username',
+    userRole = null,
+    isAdmin = false
   } = props;
 
   const isActive = (endpoint) => {
@@ -125,22 +127,26 @@ export function Navbar(props) {
         ) : null,
 
         h('div', { class: 'nav-links' },
-          h('a', { 
-            href: '/', 
-            class: isActive('index') ? 'active' : '' 
+          h('a', {
+            href: '/',
+            class: isActive('index') ? 'active' : ''
           }, 'Home'),
-          h('a', { 
-            href: '/recipes', 
-            class: isActive('recipes') ? 'active' : '' 
+          h('a', {
+            href: '/recipes',
+            class: isActive('recipes') ? 'active' : ''
           }, 'Recipes'),
-          h('a', { 
-            href: '/pantry', 
-            class: isActive('pantry') ? 'active' : '' 
+          h('a', {
+            href: '/pantry',
+            class: isActive('pantry') ? 'active' : ''
           }, 'Pantry'),
           h('a', {
             href: '/calorieTracking',
             class: isActive('calorieTracking') ? 'active' : ''
-          }, 'Track Calories')
+          }, 'Track Calories'),
+          isAdmin ? h('a', {
+            href: '/household/settings',
+            class: isActive('household.settings') ? 'active' : ''
+          }, 'Household Settings') : null
         ),
 
         h('div', { class: 'sidebar-footer' },
@@ -177,7 +183,9 @@ export function NavbarContainer() {
     showHouseholdSelector: false,
     currentEndpoint: 'index',
     userName: null,
-    username: null
+    username: null,
+    userRole: null,
+    isAdmin: false
   };
 
   return h(Navbar, navbarData);

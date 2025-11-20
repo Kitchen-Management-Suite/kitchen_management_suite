@@ -32,7 +32,9 @@ from db.schema import adds, authors, holds, household, item, member, pantry, rec
 from helpers.navbar_helper import (
     set_current_household_id,
     get_user_households,
-    inject_navbar_context
+    get_user_households_with_roles,
+    inject_navbar_context,
+    get_current_user_role
 )
 
 # import blueprints
@@ -135,8 +137,32 @@ def manage_household():
         flash('Please log in to manage households.', 'error')
         return redirect(url_for('auth.login'))
 
+    # Get households with role information
+    user_households = get_user_households_with_roles()
+
     # NEED TO IMPLEMENT HOUSEHOLD CREATION AND JOIN FUNCTIONALITY
-    return render_template('manage_household.html')
+    return render_template('manage_household.html', user_households=user_households)
+
+@app.route("/household/settings")
+def household_settings():
+    """Handle household settings route - admin only"""
+    if not session.get('logged_in'):
+        flash('Please log in to access household settings.', 'error')
+        return redirect(url_for('auth.login'))
+
+    # Check if user is admin in current household
+    user_role = get_current_user_role()
+    if user_role != 'admin':
+        flash('You must be an admin to access household settings.', 'error')
+        return redirect(url_for('index'))
+
+    # Check if user is in any households
+    households = get_user_households()
+    if not households:
+        flash('You need to join a household first.', 'error')
+        return redirect(url_for('index'))
+
+    return render_template('household_settings.html')
 
 
 
