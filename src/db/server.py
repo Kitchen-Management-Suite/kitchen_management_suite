@@ -16,18 +16,23 @@ Outputs:
 """
 
 import os
+from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
 
-# load env
-load_dotenv()
+env_path = Path(__file__).parent.parent.parent / '.env'
+if env_path.exists():
+    load_dotenv(env_path)
+else:
+    # Fallback
+    load_dotenv()
 
 DB_USER = os.getenv("db_owner")
 DB_PASS = os.getenv("db_pass")
 DB_NAME = os.getenv("db_name")
 DB_HOST = os.getenv("db_host", "localhost")
-DB_PORT = os.getenv("db_port", "5432")
+DB_PORT = os.getenv("db_port", "5433")
 
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 

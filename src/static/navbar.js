@@ -59,6 +59,10 @@ export function Navbar(props) {
               class: isActive('account') ? 'active' : '' 
             }, 'Account'),
             h('a', { 
+              href: '/settings', 
+              class: isActive('settings') ? 'active' : '' 
+            }, 'Settings'),
+            h('a', { 
               href: '/pantry', 
               class: isActive('pantry') ? 'active' : '' 
             }, 'Pantry'),
