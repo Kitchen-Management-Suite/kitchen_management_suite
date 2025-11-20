@@ -42,6 +42,7 @@ from blueprints.auth import auth_bp
 from blueprints.recipes import recipes_bp
 from blueprints.calorieTracker import calorie_tracker_bp
 from blueprints.pantry import pantry_bp
+from blueprints.userProfileManagment import manage_user_profile_bp
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -60,6 +61,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(recipes_bp)
 app.register_blueprint(pantry_bp)
 app.register_blueprint(calorie_tracker_bp)
+app.register_blueprint(manage_user_profile_bp)
 
 
 # register navbar w/ context processor (inject w/ existing variables)

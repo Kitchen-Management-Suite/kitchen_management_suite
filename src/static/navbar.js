@@ -90,6 +90,7 @@ export function Navbar(props) {
               onclick: (e) => e.stopPropagation()
             },
               h('a', { href: '/account' }, 'Account Settings'),
+              h('a', { href: '/manage_user_profile'}, 'User Profile'),
               h('a', { href: '/logout', class: 'logout-btn'}, 'Logout')
             )
           )

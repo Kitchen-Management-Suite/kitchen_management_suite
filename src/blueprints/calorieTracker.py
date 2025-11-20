@@ -69,7 +69,7 @@ def addToLog(UserNutrition):
         sqlSession.add(UserNutrition)
         sqlSession.commit()
         sqlSession.expire_all()
-
+        
     except Exception as ex:
         sqlSession.rollback()
         flash("Error in writing to database", "error")
@@ -82,9 +82,9 @@ def addToLog(UserNutrition):
 def calorieTracking():#KNOWN BUG - reloading this page after adding an item will add it to the database twice :/ fix later
     user_id = flaskSession.get("user_id")
     
-    if not user_id:### Need to unit test
-        flash("User Not Found", "error")
-        return render_template('index')
+    if not user_id:
+        flash('Please login to view Calorie Tracker', 'error')
+        return redirect(url_for('auth.login'))
     
     now = datetime.now() 
     date = now.date()
@@ -107,7 +107,7 @@ def calorieTracking():#KNOWN BUG - reloading this page after adding an item will
                 # MealType = request.form["MealType"]
             )
             addToLog(newNutritionEntry)
-        except:
+        except Exception as ex:
             flash("Error in adding item to log", "error")
             print(ex)
     dashBoardValues = {"Calories": 0, "Carbs": 0, "Protein": 0, "Fat": 0} #Setting default values
