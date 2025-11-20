@@ -42,3 +42,4 @@ venv.bak/
 .DS_Store
 .vscode/
 .app.pid
+.app.log
