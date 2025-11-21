@@ -20,7 +20,6 @@ export function Navbar(props) {
   } = props;
 
   const isActive = (endpoint) => {
-    console.log(currentEndpoint, endpoint);
     return currentEndpoint.includes(endpoint);
   };
 
@@ -62,56 +61,6 @@ export function Navbar(props) {
   };
 
   if (isLoggedIn) {
-    // Logged in navbar
-    return h('header', null,
-      h('nav', null,
-        h('div', { class: 'nav-with-dropdown' },
-          h('div', { class: 'nav-links' },
-            h('a', { 
-              href: '/', 
-              class: isActive('index') ? 'active' : '' 
-            }, 'Home'),
-            h('a', { 
-              href: '/recipes', 
-              class: isActive('recipes') ? 'active' : '' 
-            }, 'Recipes'),
-            h('a', { 
-              href: '/account', 
-              class: isActive('account') ? 'active' : '' 
-            }, 'Account'),
-            h('a', { 
-              href: '/settings', 
-              class: isActive('settings') ? 'active' : '' 
-            }, 'Settings'),
-            h('a', { 
-              href: '/pantry', 
-              class: isActive('pantry') ? 'active' : '' 
-            }, 'Pantry'),
-            h('a', { href: '/logout' }, 'Logout')
-          ),
-          
-          // Household Selector / Create/Join Button
-          showHouseholdSelector ? (
-            households.length > 0 ?
-            // If user in housholds, render dropdown + button
-            h('div', { class: 'household-selector' },
-              h('label', { for: 'household-select' }, 'Household: '),
-              h('select', {
-                id: 'household-select',
-                onchange: switchHousehold
-              },
-                ...households.map(household =>
-                  h('option', {
-                    value: household.id,
-                    selected: household.id === currentHouseholdId ? true : undefined
-                  }, household.name)
-                )
-              ),
-              h('a', {
-                href: '/household/manage',
-                class: 'household-add-btn',
-                title: 'Create or Join Household'
-              }, '+')
     const initials = userName.split(' ').map(n => n[0]).join('').toUpperCase();
 
     return h('div', null,
@@ -140,7 +89,6 @@ export function Navbar(props) {
               onclick: (e) => e.stopPropagation()
             },
               h('a', { href: '/account' }, 'Account Settings'),
-              h('a', { href: '/manage_user_profile'}, 'User Profile'),
               h('a', { href: '/logout', class: 'logout-btn'}, 'Logout')
             )
           )
