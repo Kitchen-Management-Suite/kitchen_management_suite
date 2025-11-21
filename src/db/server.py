@@ -16,17 +16,12 @@ Outputs:
 """
 
 import os
-from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
 
-env_path = Path(__file__).parent.parent.parent / '.env'
-if env_path.exists():
-    load_dotenv(env_path)
-else:
-    # Fallback
-    load_dotenv()
+# load env
+load_dotenv()
 
 DB_USER = os.getenv("db_owner")
 DB_PASS = os.getenv("db_pass")
