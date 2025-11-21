@@ -35,12 +35,17 @@ from db.schema import adds, authors, holds, household, item, member, pantry, rec
 from helpers.navbar_helper import (
     set_current_household_id,
     get_user_households,
-    inject_navbar_context
+    get_user_households_with_roles,
+    inject_navbar_context,
+    get_current_user_role
 )
 
 # import blueprints
 from blueprints.auth import auth_bp
 from blueprints.recipes import recipes_bp
+from blueprints.calorieTracker import calorie_tracker_bp
+from blueprints.pantry import pantry_bp
+from blueprints.userProfileManagment import manage_user_profile_bp
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -50,9 +55,17 @@ with app.app_context():
     print("initializing database...")
     init_database()
 
-# register auth blueprint
+#Dstinguishing sessions for sqlAlchemy & flask 
+sqlSession = get_session()
+flaskSession = session
+
+# register blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(recipes_bp)
+app.register_blueprint(pantry_bp)
+app.register_blueprint(calorie_tracker_bp)
+app.register_blueprint(manage_user_profile_bp)
+
 
 # register navbar w/ context processor (inject w/ existing variables)
 # refer to navbar_helper.py
@@ -63,11 +76,13 @@ def inject_navbar():
 
 @app.route("/")
 def index():
-    """handle index route"""
-    if session.get('logged_in'):
+    """handle index route"""    
+    if flaskSession.get('logged_in'):
         return render_template("index.html")
     else:
         return render_template("public.html")
+
+##Enter End point here for 
 
 @app.route("/pantry")
 def pantry():
@@ -585,7 +600,42 @@ def delete_account():
     finally:
         db_session.close()
     return redirect(url_for('settings'))
+    # Get households with role information
+    user_households = get_user_households_with_roles()
+
+    # NEED TO IMPLEMENT HOUSEHOLD CREATION AND JOIN FUNCTIONALITY
+    return render_template('manage_household.html', user_households=user_households)
+
+@app.route("/household/settings")
+def household_settings():
+    """Handle household settings route - admin only"""
+    if not session.get('logged_in'):
+        flash('Please log in to access household settings.', 'error')
+        return redirect(url_for('auth.login'))
+
+    # Check if user is admin in current household
+    user_role = get_current_user_role()
+    if user_role != 'admin':
+        flash('You must be an admin to access household settings.', 'error')
+        return redirect(url_for('index'))
+
+    # Check if user is in any households
+    households = get_user_households()
+    if not households:
+        flash('You need to join a household first.', 'error')
+        return redirect(url_for('index'))
+
+    return render_template('household_settings.html')
+
 
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+
+#To do 
+# Write api throttler for java
+# Write conditionals for loading calorite track page
+#Finish styling very basic search page
+# # Write the ability to pull in anything else necessary (recipies etc)
+# IF POSSIBLE allow selection of mulitple days
+# - This will require automatically checking and creating data for days that dont exist

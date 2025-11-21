@@ -1,0 +1,33 @@
+#pantry-content {
+    margin-top: 20px;
+}
+
+.pantry-list {
+    list-style: none;
+    padding: 0;
+}
+
+.pantry-list li {
+    background: var(--color-bg-light);
+    margin: 10px 0;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px var(--shadow-card);
+}
+
+.add-item-btn {
+    margin-bottom: 15px;
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.add-item-btn:hover {
+    background-color: var(--color-hover);
+}
+
+

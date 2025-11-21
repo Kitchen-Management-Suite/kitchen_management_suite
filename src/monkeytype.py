@@ -817,8 +817,8 @@ class HouseholdOrganizer:
         remaining_users = users.copy()
         random.shuffle(remaining_users)
         
-        owner_role = session.query(Role).filter_by(RoleName="Owner").first()
-        member_role = session.query(Role).filter_by(RoleName="Member").first()
+        owner_role = session.query(Role).filter_by(RoleName="admin").first()
+        member_role = session.query(Role).filter_by(RoleName="member").first()
         
         while remaining_users:
             # Decide household type based on remaining users
@@ -1100,7 +1100,7 @@ class RecipeManager:
 
 def ensure_roles(session):
     """Ensure basic roles exist"""
-    role_names = ["Owner", "Admin", "Member", "Viewer"]
+    role_names = ["admin", "member", "guest"]
     existing_roles = {r.RoleName: r for r in session.query(Role).all()}
     
     for role_name in role_names:
@@ -1118,7 +1118,7 @@ def create_cross_household_edge_cases(session, all_users, households, items):
     print("   Creating multi-household memberships...")
     # Edge case 1: 10% of users belong to multiple households
     multi_household_users = random.sample(all_users, max(1, len(all_users) // 10))
-    member_role = session.query(Role).filter_by(RoleName="Member").first()
+    member_role = session.query(Role).filter_by(RoleName="member").first()
     
     for user in multi_household_users:
         # Get current households

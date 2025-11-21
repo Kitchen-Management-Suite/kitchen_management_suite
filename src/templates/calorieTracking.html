@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}KMS | Pantry{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='calorieTracking.css') }}">
+{% endblock %}
+
+{% block content %}
+  <h2>{{ date }}</h2>
+  <h3>{{ dashBoardValues["Calories"] }} kCals</h3> 
+
+  <progress value="{{percentOfDailyGoal}}" max="1"> </progress>
+  <h3> Carbs: {{ dashBoardValues["Carbs"] }} Protein: {{ dashBoardValues["Protein"] }} Fat: {{ dashBoardValues["Fat"]}} </h3>
+  <p class="baseNutriInfo">This is Calorie Tracking Main Page</p>
+
+  <div> 
+    <h2 class="mealTypeHeader"> Breakfast </h2>
+    <button id="1" class="addMealBtn" MealType ="Breakfast" > AddMeal </button>
+  </div>
+
+  <div>
+    <h2 class="mealTypeHeader"> Lunch </h2>
+    <button id="2" class="addMealBtn" MealType ="Lunch"> AddMeal </button>
+  </div>
+
+  <div>
+    <h2 class="mealTypeHeader"> Dinner </h2>
+    <button id="3" class="addMealBtn" MealType = "Dinner"> AddMeal </button>
+  </div>
+
+  <div id="dropdownMenu" class="dropdown">
+    <a class="typeMealSelc" href="#">Choose From Recipe</a>
+    <a class="typeMealSelc" href="#">Make New Recipe</a>
+    <a class="typeMealSelc"  href="{{mealItemSearchUrl}}"> Other</a>
+  </div>
+<!-- The href's here will dynamically change as the user selects a differnet button to pass the mealType-->
+
+{% endblock %}
+{% block extra_js %}
+  <script> window.mealItemSearchLink = "{{mealItemSearchUrl}}"</script> 
+  <script defer src="{{ url_for('static', filename='calorieTrack.js') }}">  </script>
+{% endblock %}

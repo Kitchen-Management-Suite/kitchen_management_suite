@@ -9,9 +9,9 @@
 {% block content %}
 <div class="household-header">
     <h2>Recipes{% if current_household %} - {{ current_household.HouseholdName }}{% endif %}</h2>
+    <div id="recipes-root"></div>
 </div>
 
-<!-- User Authored Recipes -->
 <div class="recipe-section">
     <div class="recipe-section-header">
         <h3>Authored</h3>
@@ -50,11 +50,11 @@
         <a href="{{ url_for('recipes.create_recipe') }}">
             <button>Create New Recipe</button>
         </a>
+        <p>No recipes yet. Create your first recipe!</p>
     </div>
     {% endif %}
 </div>
 
-<!-- Household Recipes -->
 <div class="recipe-section">
     <div class="recipe-section-header">
         <h3>Household</h3>
@@ -151,5 +151,23 @@ function toggleExpanded(carouselId) {
         btn.innerHTML = 'Show Less';
     }
 }
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script type="module">
+    import { RecipesContainer } from "{{ url_for('static', filename='recipes.js') }}";
+    
+    const householdData = {
+        userHouseholds: [
+            {% for household in user_households %}
+            { id: {{ household.HouseholdID }}, name: "{{ household.HouseholdName }}" }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        currentHouseholdId: {{ current_household_id | tojson }}
+    };
+    
+    const container = RecipesContainer(householdData);
+    document.getElementById('recipes-root').appendChild(container);
 </script>
 {% endblock %}

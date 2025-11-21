@@ -10,4 +10,7 @@ db_owner=postgres
 db_pass=dbpassword
 
 SECRET_KEY=some-very-long-string
+
+openfoodfacts_api_useragent = KitchenManagementSuite/1.0
+USDAApiKey = someaApiKey
 ```
