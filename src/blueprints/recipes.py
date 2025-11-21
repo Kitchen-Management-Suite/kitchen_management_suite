@@ -172,23 +172,6 @@ def recipe_detail(recipe_id):
         return redirect(url_for('recipes.recipes'))
     finally:
         db_session.close()
-
-# Added by; Arya:
-
-@recipes_bp.route('/recipes/create', methods=['GET', 'POST'])
-def create_recipe():
-    """Display and handle recipe creation form"""
-    if not session.get('logged_in'):
-        flash('Please login to create a recipe', 'error')
-        return redirect(url_for('auth.login'))
-    
-    if request.method == 'POST':
-        # TO DO: Handle recipe form submission here (e.g. save to DB)
-        flash('Recipe created successfully!', 'success')
-        return redirect(url_for('recipes.recipes'))
-
-    # Render the recipe creation form
-    return render_template('create_recipe.html')
   
 @recipes_bp.route('/recipes/add', methods=['POST'])
 def add_recipe():
