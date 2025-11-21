@@ -32,7 +32,7 @@ DB_USER = os.getenv("db_owner")
 DB_PASS = os.getenv("db_pass")
 DB_NAME = os.getenv("db_name")
 DB_HOST = os.getenv("db_host", "localhost")
-DB_PORT = os.getenv("db_port", "5433")
+DB_PORT = os.getenv("db_port", "5432")
 
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
