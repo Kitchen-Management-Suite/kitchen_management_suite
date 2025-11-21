@@ -28,7 +28,9 @@
                 {% if household.HouseholdID == current_household_id %}
                 <span style="color: #1976d2; font-weight: bold;">✓ Active</span>
                 {% else %}
-                <button class="switch-btn" data-id="{{ household.HouseholdID }}">Switch</button>
+                <form method="POST" action="{{ url_for('switch_household', household_id=household.HouseholdID) }}" style="display: inline;">
+                    <button type="submit" class="switch-btn">Switch</button>
+                </form>
                 {% endif %}
             </li>
             {% endfor %}
@@ -43,10 +45,8 @@
     <!-- Create household -->
     <div class="management-section">
         <h3>Create a New Household</h3>
-        <form id="create-household-form">
+        <form method="POST" action="{{ url_for('create_household') }}" id="create-household-form">
             <input type="text" name="household_name" placeholder="Household Name" required>
-            <input name="description" placeholder="Description (optional)"></input>
-            <input type="password" name="password" placeholder="Set Password (optional)">
             <button type="submit">Create</button>
         </form>
     </div>
@@ -54,35 +54,10 @@
     <!-- Join household -->
     <div class="management-section">
         <h3>Join Existing Household</h3>
-        <form id="join-household-form">
-            <input type="text" name="join_code" placeholder="Enter Code or Household Name" required>
-            <input type="password" name="join_password" placeholder="Password (if any)">
+        <form method="POST" action="{{ url_for('join_household') }}" id="join-household-form">
+            <input type="text" name="join_code" placeholder="Enter Household Name" required>
             <button type="submit">Join</button>
         </form>
     </div>
 </div>
-
-<script>
-    // --- HOOKS + FRONTEND SIMULATION ---
-    document.getElementById('create-household-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const name = e.target.household_name.value;
-        alert(`(Mock) Created household: ${name}`);
-        e.target.reset();
-    });
-
-    document.getElementById('join-household-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const code = e.target.join_code.value;
-        alert(`(Mock) Joining household: ${code}`);
-        e.target.reset();
-    });
-
-    document.querySelectorAll('.switch-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const id = btn.dataset.id;
-            alert(`(Mock) Switched to household ID ${id}`);
-        });
-    });
-</script>
 {% endblock %}

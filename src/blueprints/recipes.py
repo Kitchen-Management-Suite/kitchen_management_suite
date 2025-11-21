@@ -172,7 +172,7 @@ def recipe_detail(recipe_id):
         return redirect(url_for('recipes.recipes'))
     finally:
         db_session.close()
-
+  
 @recipes_bp.route('/recipes/add', methods=['POST'])
 def add_recipe():
     """Add a new custom recipe"""
