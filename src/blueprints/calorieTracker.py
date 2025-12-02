@@ -23,6 +23,7 @@ from db.schema import user_nutrition, user_profile
 from sqlalchemy import and_, func
 from datetime import datetime
 from helpers.api_helper import searchByStr
+from collections import defaultdict
 
 sqlSession = get_session()
 flaskSession = session
@@ -96,7 +97,7 @@ def calorieTracking():#KNOWN BUG - reloading this page after adding an item will
                 UserID = user_id,
                 Date = date,
                 Time = time,
-                # ItemName = request.form['itemName'],
+                ItemName = request.form['itemName'],
                 CaloriesConsumed = request.form["itemKCal"],
                 Protein = request.form["itemProtein"],
                 Carbs = request.form["itemCarbs"],
@@ -104,7 +105,7 @@ def calorieTracking():#KNOWN BUG - reloading this page after adding an item will
                 Fiber = request.form["itemFiber"],
                 Sugar = request.form["itemSugar"],
                 Sodium = request.form["itemSodium"],
-                # MealType = request.form["MealType"]
+                MealType = request.form["MealType"]
             )
             addToLog(newNutritionEntry)
         except Exception as ex:
@@ -117,6 +118,12 @@ def calorieTracking():#KNOWN BUG - reloading this page after adding an item will
         uP = user_profile.UserProfile
         nutritionData = sqlSession.query(nD).filter(nD.UserID == user_id).filter(nD.Date == date).all()
         userProfileData = sqlSession.query(uP).filter(uP.UserID == user_id).first()
+        
+        groupedByMealType = defaultdict(list)##This may not be the most efficent way to do this
+        for entry in nutritionData:#But for now it works 
+            groupedByMealType[entry.MealType].append(entry)
+        groupedByMealType = dict(groupedByMealType)
+
         if not len(nutritionData) == 0:
             for entry in nutritionData:
                 dashBoardValues["Calories"] += entry.CaloriesConsumed
@@ -138,14 +145,25 @@ def calorieTracking():#KNOWN BUG - reloading this page after adding an item will
         flash("Error in database query", "error")
         print("Error in database query")
         raise Exception(ex)
-        
+         
     if not nutritionData: 
         print("No User nutrition data retrieved")
-
+    print(type(groupedByMealType))
+    print(groupedByMealType)
     print(f"Loading User Daily Nutrition Values: {dashBoardValues}")
+    # groupedByMealType = dict()#Used for testing return of no values
     return render_template('calorieTracking.html', 
                            dashBoardValues = dashBoardValues, 
                            date = date,
                            session = flaskSession, 
                            mealItemSearchUrl = "/meal_item_search",
-                           percentOfDailyGoal = percentOfDailyGoal)
+                           percentOfDailyGoal = percentOfDailyGoal,
+                           groupedByMealType = groupedByMealType,
+                           orderOfMealType = ["Breakfast", "AM-Snack", "Lunch", "PM-Snack", "Dinner"],
+                           calorieGoal = userProfileData.CalorieGoal)
+
+##TO DO 
+#Update Monkey Type (Cause I need meal types w names to exist)
+#Clear all current data and rerun, cause I need that data
+#Create front end rendering for items on display 
+#MAKE IT LOOK GOOD

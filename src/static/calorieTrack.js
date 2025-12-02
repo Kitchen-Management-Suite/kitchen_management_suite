@@ -20,14 +20,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     addMealButtons.forEach(button => {
          button.addEventListener("click", (event) => {
-            dropdown.style.display = dropdown.style.display === "block" ? "none": "block";
+            dropdown.style.display = dropdown.style.display === "absolute" ? "none": "absolute";
 
-            dropdown.style.left =  event.pageX + "px";
-            dropdown.style.top = event.pageY + "px";
+            dropdown.style.left =  event.screenX + "px";
+            dropdown.style.top = event.screenY + "px";
 
             // button.setAttribute("MealType", typeArray[i] )
             // console.log(button.getAttribute("MealType"));
-            console.log(window.mealItemSearchLink)
+            // console.log(window.mealItemSearchLink)
             dropdown.children[2].setAttribute("href", window.mealItemSearchLink + `?MealType=${encodeURIComponent(button.getAttribute("MealType"))}`)//Accesses the itemSearch selection of items
             curtClicked = button;
             // dropdown.children[2].setAttribute("href", "{{url_for('meal_item_search')}}" + )//Accesses the itemSearch selection of items
@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!(curtClicked.contains(event.target)) && !(dropdown.contains(event.target))){
             dropdown.style.display = "none";
             curtClicked = null;
-            console.log(dropdown.style.display);
+            // console.log(dropdown.style.display);
         }
     })
 })
