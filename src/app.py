@@ -289,10 +289,18 @@ def index():
             ).scalar()
             metrics['user_recipes_count'] = user_recipe_count or 0
 
+            # Debug output
+            print(f"DEBUG: metrics keys: {metrics.keys()}")
+            print(f"DEBUG: current_household: {metrics.get('current_household')}")
+            print(f"DEBUG: current_household_id from session: {current_household_id}")
+            print(f"DEBUG: total_households: {metrics.get('total_households')}")
+
             return render_template("index.html", metrics=metrics)
 
         except Exception as e:
             print(f"Error loading home metrics: {e}")
+            import traceback
+            traceback.print_exc()
             return render_template("index.html", metrics=None)
         finally:
             db_session.close()

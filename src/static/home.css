@@ -8,18 +8,27 @@
 
 /* Dashboard Header */
 .dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     margin-bottom: 2rem;
     padding-bottom: 1.5rem;
     border-bottom: 2px solid #ecf0f1;
 }
 
+.header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
 .dashboard-header h1 {
     font-size: 2rem;
-    margin: 0 0 0.25rem 0;
+    margin: 0;
     color: #2c3e50;
+}
+
+.household-info {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
 }
 
 .household-name {
@@ -172,9 +181,6 @@
 }
 
 .shopping-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
     padding: 0.75rem;
     border-radius: 6px;
     transition: background 0.2s;
@@ -182,11 +188,6 @@
 
 .shopping-item:hover {
     background: #f8f9fa;
-}
-
-.item-checkbox {
-    font-size: 1.25rem;
-    color: #95a5a6;
 }
 
 .item-info {
@@ -271,21 +272,13 @@
 }
 
 .expiring-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
     padding: 0.75rem;
     background: #fff3cd;
     border-radius: 6px;
     margin-bottom: 0.5rem;
 }
 
-.expiring-icon {
-    font-size: 1.25rem;
-}
-
 .expiring-info {
-    flex: 1;
     display: flex;
     flex-direction: column;
 }
@@ -353,10 +346,6 @@
     color: #7f8c8d;
 }
 
-.medal {
-    font-size: 1.5rem;
-}
-
 /* Quick Actions */
 .action-buttons {
     display: grid;
@@ -366,9 +355,8 @@
 
 .action-btn {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: center;
     padding: 1rem;
     border-radius: 8px;
     text-decoration: none;
@@ -380,10 +368,6 @@
 .action-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.btn-icon {
-    font-size: 2rem;
 }
 
 .action-btn.primary {
@@ -536,11 +520,6 @@
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
-.feature-icon {
-    font-size: 3.5rem;
-    margin-bottom: 1rem;
-}
-
 .feature-card h3 {
     margin: 0 0 0.75rem 0;
     color: #2c3e50;
@@ -564,19 +543,19 @@
         padding: 1rem;
     }
 
-    .dashboard-header {
+    .dashboard-header h1 {
+        font-size: 1.75rem;
+    }
+
+    .household-info {
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
     }
 
-    .dashboard-header h1 {
-        font-size: 1.75rem;
-    }
-
     .quick-stats {
         width: 100%;
-        justify-content: space-around;
+        justify-content: space-between;
     }
 
     .dashboard-grid {
