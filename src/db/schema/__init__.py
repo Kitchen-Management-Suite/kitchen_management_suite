@@ -16,6 +16,7 @@ from .member import Member
 from .adds import Adds
 from .authors import Authors
 from .holds import Holds
+from .join_request import JoinRequest
 
 # make tables (models) available when importing from schema package
 __all__ = [
@@ -30,5 +31,6 @@ __all__ = [
     'Member', 
     'Adds', 
     'Authors', 
-    'Holds'
+    'Holds',
+    'JoinRequest'
 ]

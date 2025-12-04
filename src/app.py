@@ -380,11 +380,14 @@ def manage_household():
     db_session = get_session()
     
     try:
-        #get user households with roles
         from db.schema.household import Household
         from db.schema.member import Member
         from db.schema.role import Role
+        from db.schema.join_request import JoinRequest
+        from db.schema.user import User
+        from sqlalchemy import func
         
+        # Get user households with roles
         user_households_data = db_session.query(
             Household,
             Member,
@@ -397,26 +400,51 @@ def manage_household():
             Member.UserID == user_id
         ).all()
         
-        #format data for template
+        # Format data for template
         user_households = []
         for household, member, role in user_households_data:
+            # Count pending requests for this household if user is Owner
+            pending_count = 0
+            if role.RoleName == 'Owner':
+                pending_count = db_session.query(func.count(JoinRequest.RequestID)).filter(
+                    JoinRequest.HouseholdID == household.HouseholdID,
+                    JoinRequest.Status == 'pending'
+                ).scalar() or 0
+            
             user_households.append({
-                'HouseholdID': household.HouseholdID,
-                'HouseholdName': household.HouseholdName,
-                'Role': role.RoleName,
-                'RoleID': role.RoleID
+                'id': household.HouseholdID,
+                'name': household.HouseholdName,
+                'role': role.RoleName,
+                'roleId': role.RoleID,
+                'joinCode': household.JoinCode if role.RoleName == 'Owner' else None,
+                'joinCodeEnabled': household.JoinCodeEnabled if role.RoleName == 'Owner' else False,
+                'pendingRequests': pending_count
             })
+        
+        # Get user's pending join requests (to other households)
+        pending_requests = db_session.query(JoinRequest, Household).join(Household).filter(
+            JoinRequest.UserID == user_id,
+            JoinRequest.Status == 'pending'
+        ).all()
+        
+        pending_requests_data = [{
+            'id': req.RequestID,
+            'householdName': hh.HouseholdName,
+            'createdAt': req.CreatedAt.isoformat() if req.CreatedAt else None
+        } for req, hh in pending_requests]
         
         current_household_id = session.get('current_household_id')
         
         return render_template('manage_household.html',
                              user_households=user_households,
+                             pending_requests=pending_requests_data,
                              current_household_id=current_household_id)
     
     except Exception as e:
         flash(f'Error loading households: {str(e)}', 'error')
         return render_template('manage_household.html',
                              user_households=[],
+                             pending_requests=[],
                              current_household_id=None)
     finally:
         db_session.close()
@@ -458,8 +486,10 @@ def create_household():
                 flash('Owner role not found in database.', 'error')
                 return redirect(url_for('manage_household'))
             
-            #create new household
+            #create new household with join code
             new_household = Household(HouseholdName=household_name)
+            new_household.generate_join_code()
+            new_household.JoinCodeEnabled = True
             db_session.add(new_household)
             db_session.flush()
             
@@ -567,16 +597,10 @@ def join_household():
 
 @app.route("/household/settings")
 def household_settings():
-    """Handle household settings route - admin only"""
+    """Handle household settings route - Owner or admin only"""
     if not session.get('logged_in'):
         flash('Please log in to access household settings.', 'error')
         return redirect(url_for('auth.login'))
-
-    # Check if user is admin in current household
-    user_role = get_current_user_role()
-    if user_role != 'admin':
-        flash('You must be an admin to access household settings.', 'error')
-        return redirect(url_for('index'))
 
     # Check if user is in any households
     households = get_user_households()
@@ -584,7 +608,88 @@ def household_settings():
         flash('You need to join a household first.', 'error')
         return redirect(url_for('index'))
 
-    return render_template('household_settings.html')
+    # Check if user is Owner in current household
+    user_role = get_current_user_role()
+    if user_role not in ['Owner', 'admin']:
+        flash('You must be an Owner to access household settings.', 'error')
+        return redirect(url_for('index'))
+
+    user_id = session.get('user_id')
+    current_household_id = session.get('current_household_id')
+    db_session = get_session()
+
+    try:
+        from db.schema.household import Household
+        from db.schema.member import Member
+        from db.schema.role import Role
+        from db.schema.user import User
+        from db.schema.pantry import Pantry
+        from db.schema.adds import Adds
+        from sqlalchemy import func
+
+        # Get current household
+        current_household = db_session.query(Household).get(current_household_id)
+        if not current_household:
+            flash('Household not found.', 'error')
+            return redirect(url_for('index'))
+
+        # Get all members with their roles and user info
+        members_data = db_session.query(
+            User.UserID,
+            User.Username,
+            User.FirstName,
+            User.LastName,
+            User.Email,
+            Role.RoleName,
+            Role.RoleID,
+            Member.MemberID
+        ).join(
+            Member, User.UserID == Member.UserID
+        ).join(
+            Role, Member.RoleID == Role.RoleID
+        ).filter(
+            Member.HouseholdID == current_household_id
+        ).all()
+
+        members = [{
+            'user_id': m.UserID,
+            'member_id': m.MemberID,
+            'username': m.Username,
+            'first_name': m.FirstName or '',
+            'last_name': m.LastName or '',
+            'email': m.Email or '',
+            'role': m.RoleName,
+            'role_id': m.RoleID,
+            'is_current_user': m.UserID == user_id
+        } for m in members_data]
+
+        # Get available roles
+        roles = db_session.query(Role).all()
+        roles_list = [{'id': r.RoleID, 'name': r.RoleName} for r in roles]
+
+        # Get pantry item count
+        pantry = db_session.query(Pantry).filter(
+            Pantry.HouseholdID == current_household_id
+        ).first()
+
+        pantry_item_count = 0
+        if pantry:
+            pantry_item_count = db_session.query(func.count(Adds.AddsID)).filter(
+                Adds.PantryID == pantry.PantryID
+            ).scalar() or 0
+
+        return render_template('household_settings.html',
+                             household=current_household,
+                             members=members,
+                             roles=roles_list,
+                             pantry_item_count=pantry_item_count,
+                             user_role=user_role)
+
+    except Exception as e:
+        flash(f'Error loading household settings: {str(e)}', 'error')
+        return redirect(url_for('index'))
+    finally:
+        db_session.close()
 
 
 if __name__ == "__main__":

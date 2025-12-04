@@ -4,58 +4,29 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='household.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='modal.css') }}">
 {% endblock %}
 
 {% block content %}
-    <h2>Manage Households</h2>
+<h1>Manage Households</h1>
 
-    <div class="info-box">
-        <p>Create or join a household to organize your pantry, recipes, and items.</p>
-    </div>
+<div class="info-box">
+    <p>Create or join a household to organize your pantry, recipes, and items with others.</p>
+</div>
 
-    <!-- Existing Households -->
-    {% if user_households %}
-    <div class="current-households management-section">
-        <h3>Your Current Households</h3>
-        <ul class="household-list">
-            {% for household in user_households %}
-            <li class="household-item" data-household-id="{{ household.HouseholdID }}">
-                <div>
-                    <strong>{{ household.HouseholdName }}</strong>
-                    <div class="role">{{ household.Role or "Member" }}</div>
-                </div>
-                {% if household.HouseholdID == current_household_id %}
-                <span style="color: #1976d2; font-weight: bold;">✓ Active</span>
-                {% else %}
-                <form method="POST" action="{{ url_for('switch_household', household_id=household.HouseholdID) }}" style="display: inline;">
-                    <button type="submit" class="switch-btn">Switch</button>
-                </form>
-                {% endif %}
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-    {% else %}
-    <div class="form-placeholder">
-        You are not part of any households yet.
-    </div>
-    {% endif %}
+<div id="manage-households-root"></div>
+{% endblock %}
 
-    <!-- Create household -->
-    <div class="management-section">
-        <h3>Create a New Household</h3>
-        <form method="POST" action="{{ url_for('create_household') }}" id="create-household-form">
-            <input type="text" name="household_name" placeholder="Household Name" required>
-            <button type="submit">Create</button>
-        </form>
-    </div>
-
-    <!-- Join household -->
-    <div class="management-section">
-        <h3>Join Existing Household</h3>
-        <form method="POST" action="{{ url_for('join_household') }}" id="join-household-form">
-            <input type="text" name="join_code" placeholder="Enter Household Name" required>
-            <button type="submit">Join</button>
-        </form>
-    </div>
+{% block extra_js %}
+<script>
+    window.manageHouseholdsData = {
+        households: {{ user_households | tojson }},
+        pendingRequests: {{ pending_requests | tojson }},
+        currentHouseholdId: {{ current_household_id | tojson }}
+    };
+</script>
+<script type="module">
+    import { initManageHouseholds } from "{{ url_for('static', filename='manageHousehold.js') }}";
+    initManageHouseholds('manage-households-root', window.manageHouseholdsData);
+</script>
 {% endblock %}

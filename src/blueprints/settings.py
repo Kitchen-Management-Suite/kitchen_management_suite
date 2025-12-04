@@ -355,3 +355,699 @@ def delete_account():
         db_session.close()
         
     return redirect(url_for('settings.settings'))
+
+
+# ============================================================================
+# Household Settings Routes (Owner only)
+# ============================================================================
+
+def _check_household_owner():
+    """Helper to verify user is Owner of current household"""
+    if not session.get('logged_in'):
+        return None, 'Please log in.'
+    
+    user_id = session.get('user_id')
+    household_id = session.get('current_household_id')
+    
+    if not household_id:
+        return None, 'No household selected.'
+    
+    db_session = get_session()
+    try:
+        member = db_session.query(Member).join(Role).filter(
+            Member.UserID == user_id,
+            Member.HouseholdID == household_id
+        ).first()
+        
+        if not member or member.role.RoleName not in ['Owner', 'admin']:
+            return None, 'You must be an Owner to perform this action.'
+        
+        return household_id, None
+    finally:
+        db_session.close()
+
+
+@settings_bp.route('/settings/household/rename', methods=['POST'])
+def rename_household():
+    """Rename the current household"""
+    household_id, error = _check_household_owner()
+    if error:
+        flash(error, 'error')
+        return redirect(url_for('household_settings'))
+
+    new_name = request.form.get('household_name', '').strip()
+    
+    if not new_name:
+        flash('Household name is required.', 'error')
+        return redirect(url_for('household_settings'))
+    
+    if len(new_name) > 100:
+        flash('Household name must be 100 characters or less.', 'error')
+        return redirect(url_for('household_settings'))
+
+    db_session = get_session()
+    try:
+        # Check if name is already taken by another household
+        existing = db_session.query(Household).filter(
+            Household.HouseholdName == new_name,
+            Household.HouseholdID != household_id
+        ).first()
+        
+        if existing:
+            flash('A household with this name already exists.', 'error')
+            return redirect(url_for('household_settings'))
+        
+        household = db_session.query(Household).get(household_id)
+        household.HouseholdName = new_name
+        db_session.commit()
+        
+        flash('Household name updated successfully.', 'success')
+    except Exception as e:
+        db_session.rollback()
+        flash(f'Error renaming household: {str(e)}', 'error')
+    finally:
+        db_session.close()
+
+    return redirect(url_for('household_settings'))
+
+
+@settings_bp.route('/settings/household/member/role', methods=['POST'])
+def change_member_role():
+    """Change a member's role in the household"""
+    household_id, error = _check_household_owner()
+    if error:
+        flash(error, 'error')
+        return redirect(url_for('household_settings'))
+
+    member_id = request.form.get('member_id')
+    new_role_id = request.form.get('role_id')
+    
+    if not member_id or not new_role_id:
+        flash('Member and role are required.', 'error')
+        return redirect(url_for('household_settings'))
+
+    db_session = get_session()
+    try:
+        member = db_session.query(Member).filter(
+            Member.MemberID == member_id,
+            Member.HouseholdID == household_id
+        ).first()
+        
+        if not member:
+            flash('Member not found in this household.', 'error')
+            return redirect(url_for('household_settings'))
+        
+        # Prevent removing the last Owner
+        if member.role.RoleName == 'Owner':
+            owner_count = db_session.query(Member).join(Role).filter(
+                Member.HouseholdID == household_id,
+                Role.RoleName == 'Owner'
+            ).count()
+            
+            new_role = db_session.query(Role).get(new_role_id)
+            if owner_count <= 1 and new_role.RoleName != 'Owner':
+                flash('Cannot remove the last Owner. Assign another Owner first.', 'error')
+                return redirect(url_for('household_settings'))
+        
+        member.RoleID = new_role_id
+        db_session.commit()
+        
+        flash('Member role updated successfully.', 'success')
+    except Exception as e:
+        db_session.rollback()
+        flash(f'Error changing member role: {str(e)}', 'error')
+    finally:
+        db_session.close()
+
+    return redirect(url_for('household_settings'))
+
+
+@settings_bp.route('/settings/household/member/remove', methods=['POST'])
+def remove_member():
+    """Remove a member from the household"""
+    household_id, error = _check_household_owner()
+    if error:
+        flash(error, 'error')
+        return redirect(url_for('household_settings'))
+
+    member_id = request.form.get('member_id')
+    
+    if not member_id:
+        flash('Member ID is required.', 'error')
+        return redirect(url_for('household_settings'))
+
+    db_session = get_session()
+    try:
+        member = db_session.query(Member).filter(
+            Member.MemberID == member_id,
+            Member.HouseholdID == household_id
+        ).first()
+        
+        if not member:
+            flash('Member not found in this household.', 'error')
+            return redirect(url_for('household_settings'))
+        
+        # Prevent removing the last Owner
+        if member.role.RoleName == 'Owner':
+            owner_count = db_session.query(Member).join(Role).filter(
+                Member.HouseholdID == household_id,
+                Role.RoleName == 'Owner'
+            ).count()
+            
+            if owner_count <= 1:
+                flash('Cannot remove the last Owner. Assign another Owner first.', 'error')
+                return redirect(url_for('household_settings'))
+        
+        # Prevent self-removal (use leave household instead)
+        if member.UserID == session.get('user_id'):
+            flash('You cannot remove yourself. Use "Leave Household" instead.', 'error')
+            return redirect(url_for('household_settings'))
+        
+        username = member.user.Username
+        db_session.delete(member)
+        db_session.commit()
+        
+        flash(f'Member "{username}" has been removed from the household.', 'success')
+    except Exception as e:
+        db_session.rollback()
+        flash(f'Error removing member: {str(e)}', 'error')
+    finally:
+        db_session.close()
+
+    return redirect(url_for('household_settings'))
+
+
+@settings_bp.route('/settings/household/pantry/reset', methods=['POST'])
+def reset_pantry():
+    """Clear all items from the household pantry"""
+    household_id, error = _check_household_owner()
+    if error:
+        flash(error, 'error')
+        return redirect(url_for('household_settings'))
+
+    confirm = request.form.get('confirm_reset', '')
+    if confirm != 'RESET':
+        flash('Type RESET to confirm pantry reset.', 'error')
+        return redirect(url_for('household_settings'))
+
+    db_session = get_session()
+    try:
+        from db.schema.pantry import Pantry
+        from db.schema.adds import Adds
+        
+        pantry = db_session.query(Pantry).filter(
+            Pantry.HouseholdID == household_id
+        ).first()
+        
+        if pantry:
+            # Delete all items from the pantry
+            deleted_count = db_session.query(Adds).filter(
+                Adds.PantryID == pantry.PantryID
+            ).delete()
+            
+            db_session.commit()
+            flash(f'Pantry cleared. {deleted_count} item(s) removed.', 'success')
+        else:
+            flash('No pantry found for this household.', 'error')
+    except Exception as e:
+        db_session.rollback()
+        flash(f'Error resetting pantry: {str(e)}', 'error')
+    finally:
+        db_session.close()
+
+    return redirect(url_for('household_settings'))
+
+
+@settings_bp.route('/settings/household/delete', methods=['POST'])
+def delete_household():
+    """Delete the entire household"""
+    household_id, error = _check_household_owner()
+    if error:
+        flash(error, 'error')
+        return redirect(url_for('household_settings'))
+
+    confirm = request.form.get('confirm_delete', '')
+    if confirm != 'DELETE':
+        flash('Type DELETE to confirm household deletion.', 'error')
+        return redirect(url_for('household_settings'))
+
+    db_session = get_session()
+    try:
+        from db.schema.pantry import Pantry
+        from db.schema.adds import Adds
+        from db.schema.holds import Holds
+        from db.schema.authors import Authors
+        
+        # Delete pantry items first
+        pantry = db_session.query(Pantry).filter(
+            Pantry.HouseholdID == household_id
+        ).first()
+        
+        if pantry:
+            db_session.query(Adds).filter(Adds.PantryID == pantry.PantryID).delete()
+            db_session.delete(pantry)
+        
+        # Delete recipe associations
+        db_session.query(Holds).filter(Holds.HouseholdID == household_id).delete()
+        db_session.query(Authors).filter(Authors.HouseholdID == household_id).delete()
+        
+        # Delete all members
+        db_session.query(Member).filter(Member.HouseholdID == household_id).delete()
+        
+        # Delete the household
+        household = db_session.query(Household).get(household_id)
+        household_name = household.HouseholdName
+        db_session.delete(household)
+        
+        db_session.commit()
+        
+        # Clear current household from session
+        session.pop('current_household_id', None)
+        
+        flash(f'Household "{household_name}" has been deleted.', 'success')
+        return redirect(url_for('index'))
+    except Exception as e:
+        db_session.rollback()
+        flash(f'Error deleting household: {str(e)}', 'error')
+    finally:
+        db_session.close()
+
+    return redirect(url_for('household_settings'))
+
+
+# ============================================================================
+# Join Code Management Routes
+# ============================================================================
+
+@settings_bp.route('/settings/household/joincode/generate', methods=['POST'])
+def generate_join_code():
+    """Generate a new join code for the household"""
+    household_id, error = _check_household_owner()
+    if error:
+        return jsonify({'success': False, 'error': error}), 403
+
+    db_session = get_session()
+    try:
+        household = db_session.query(Household).get(household_id)
+        if not household:
+            return jsonify({'success': False, 'error': 'Household not found'}), 404
+        
+        new_code = household.generate_join_code()
+        household.JoinCodeEnabled = True
+        db_session.commit()
+        
+        return jsonify({
+            'success': True,
+            'joinCode': new_code,
+            'enabled': True
+        })
+    except Exception as e:
+        db_session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db_session.close()
+
+
+@settings_bp.route('/settings/household/joincode/toggle', methods=['POST'])
+def toggle_join_code():
+    """Enable or disable the join code"""
+    household_id, error = _check_household_owner()
+    if error:
+        return jsonify({'success': False, 'error': error}), 403
+
+    db_session = get_session()
+    try:
+        data = request.get_json()
+        enabled = data.get('enabled', False)
+        
+        household = db_session.query(Household).get(household_id)
+        if not household:
+            return jsonify({'success': False, 'error': 'Household not found'}), 404
+        
+        household.JoinCodeEnabled = enabled
+        db_session.commit()
+        
+        return jsonify({
+            'success': True,
+            'enabled': enabled
+        })
+    except Exception as e:
+        db_session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db_session.close()
+
+
+@settings_bp.route('/settings/household/joincode', methods=['GET'])
+def get_join_code():
+    """Get the current join code for the household"""
+    household_id, error = _check_household_owner()
+    if error:
+        return jsonify({'success': False, 'error': error}), 403
+
+    db_session = get_session()
+    try:
+        household = db_session.query(Household).get(household_id)
+        if not household:
+            return jsonify({'success': False, 'error': 'Household not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'joinCode': household.JoinCode,
+            'enabled': household.JoinCodeEnabled or False
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db_session.close()
+
+
+# ============================================================================
+# Join Request Management Routes
+# ============================================================================
+
+@settings_bp.route('/settings/household/requests', methods=['GET'])
+def get_join_requests():
+    """Get pending join requests for the household"""
+    household_id, error = _check_household_owner()
+    if error:
+        return jsonify({'success': False, 'error': error}), 403
+
+    db_session = get_session()
+    try:
+        from db.schema.join_request import JoinRequest
+        from db.schema.user import User
+        
+        requests = db_session.query(JoinRequest, User).join(User).filter(
+            JoinRequest.HouseholdID == household_id,
+            JoinRequest.Status == 'pending'
+        ).all()
+        
+        request_list = [{
+            'id': req.RequestID,
+            'userId': req.UserID,
+            'username': user.Username,
+            'firstName': user.FirstName or '',
+            'lastName': user.LastName or '',
+            'email': user.Email or '',
+            'message': req.Message or '',
+            'createdAt': req.CreatedAt.isoformat() if req.CreatedAt else None
+        } for req, user in requests]
+        
+        return jsonify({
+            'success': True,
+            'requests': request_list
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db_session.close()
+
+
+@settings_bp.route('/settings/household/requests/<int:request_id>/accept', methods=['POST'])
+def accept_join_request(request_id):
+    """Accept a join request"""
+    household_id, error = _check_household_owner()
+    if error:
+        return jsonify({'success': False, 'error': error}), 403
+
+    db_session = get_session()
+    try:
+        from db.schema.join_request import JoinRequest
+        
+        join_req = db_session.query(JoinRequest).filter(
+            JoinRequest.RequestID == request_id,
+            JoinRequest.HouseholdID == household_id,
+            JoinRequest.Status == 'pending'
+        ).first()
+        
+        if not join_req:
+            return jsonify({'success': False, 'error': 'Request not found'}), 404
+        
+        # Get Member role
+        member_role = db_session.query(Role).filter(Role.RoleName == 'Member').first()
+        if not member_role:
+            return jsonify({'success': False, 'error': 'Member role not found'}), 500
+        
+        # Check if user is already a member
+        existing = db_session.query(Member).filter(
+            Member.UserID == join_req.UserID,
+            Member.HouseholdID == household_id
+        ).first()
+        
+        if existing:
+            join_req.Status = 'accepted'
+            db_session.commit()
+            return jsonify({'success': True, 'message': 'User is already a member'})
+        
+        # Add user as member
+        new_member = Member(
+            UserID=join_req.UserID,
+            HouseholdID=household_id,
+            RoleID=member_role.RoleID
+        )
+        db_session.add(new_member)
+        
+        join_req.Status = 'accepted'
+        db_session.commit()
+        
+        return jsonify({'success': True, 'message': 'Request accepted'})
+    except Exception as e:
+        db_session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db_session.close()
+
+
+@settings_bp.route('/settings/household/requests/<int:request_id>/deny', methods=['POST'])
+def deny_join_request(request_id):
+    """Deny a join request"""
+    household_id, error = _check_household_owner()
+    if error:
+        return jsonify({'success': False, 'error': error}), 403
+
+    db_session = get_session()
+    try:
+        from db.schema.join_request import JoinRequest
+        
+        join_req = db_session.query(JoinRequest).filter(
+            JoinRequest.RequestID == request_id,
+            JoinRequest.HouseholdID == household_id,
+            JoinRequest.Status == 'pending'
+        ).first()
+        
+        if not join_req:
+            return jsonify({'success': False, 'error': 'Request not found'}), 404
+        
+        join_req.Status = 'denied'
+        db_session.commit()
+        
+        return jsonify({'success': True, 'message': 'Request denied'})
+    except Exception as e:
+        db_session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db_session.close()
+
+
+# ============================================================================
+# User-facing Join Routes (for users wanting to join households)
+# ============================================================================
+
+@settings_bp.route('/household/join/code', methods=['POST'])
+def join_with_code():
+    """Join a household using a join code"""
+    if not session.get('logged_in'):
+        return jsonify({'success': False, 'error': 'Not logged in'}), 401
+
+    user_id = session.get('user_id')
+    db_session = get_session()
+    
+    try:
+        data = request.get_json()
+        join_code = data.get('code', '').strip().upper()
+        
+        if not join_code:
+            return jsonify({'success': False, 'error': 'Join code is required'}), 400
+        
+        # Find household by join code
+        household = db_session.query(Household).filter(
+            Household.JoinCode == join_code,
+            Household.JoinCodeEnabled == True
+        ).first()
+        
+        if not household:
+            return jsonify({'success': False, 'error': 'Invalid or disabled join code'}), 404
+        
+        # Check if already a member
+        existing = db_session.query(Member).filter(
+            Member.UserID == user_id,
+            Member.HouseholdID == household.HouseholdID
+        ).first()
+        
+        if existing:
+            return jsonify({'success': False, 'error': 'You are already a member of this household'}), 400
+        
+        # Get Member role
+        member_role = db_session.query(Role).filter(Role.RoleName == 'Member').first()
+        if not member_role:
+            return jsonify({'success': False, 'error': 'Member role not found'}), 500
+        
+        # Add as member directly (no approval needed for code join)
+        new_member = Member(
+            UserID=user_id,
+            HouseholdID=household.HouseholdID,
+            RoleID=member_role.RoleID
+        )
+        db_session.add(new_member)
+        db_session.commit()
+        
+        # Set as current household if none selected
+        if not session.get('current_household_id'):
+            session['current_household_id'] = household.HouseholdID
+        
+        return jsonify({
+            'success': True,
+            'message': f'Successfully joined "{household.HouseholdName}"',
+            'householdId': household.HouseholdID,
+            'householdName': household.HouseholdName
+        })
+    except Exception as e:
+        db_session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db_session.close()
+
+
+@settings_bp.route('/household/join/request', methods=['POST'])
+def request_to_join():
+    """Request to join a household (requires approval)"""
+    if not session.get('logged_in'):
+        return jsonify({'success': False, 'error': 'Not logged in'}), 401
+
+    user_id = session.get('user_id')
+    db_session = get_session()
+    
+    try:
+        from db.schema.join_request import JoinRequest
+        from sqlalchemy import func
+        
+        data = request.get_json()
+        household_name = data.get('householdName', '').strip()
+        message = data.get('message', '').strip()
+        
+        if not household_name:
+            return jsonify({'success': False, 'error': 'Household name is required'}), 400
+        
+        # Find household by name
+        household = db_session.query(Household).filter(
+            func.lower(Household.HouseholdName) == func.lower(household_name)
+        ).first()
+        
+        if not household:
+            return jsonify({'success': False, 'error': 'Household not found'}), 404
+        
+        # Check if already a member
+        existing_member = db_session.query(Member).filter(
+            Member.UserID == user_id,
+            Member.HouseholdID == household.HouseholdID
+        ).first()
+        
+        if existing_member:
+            return jsonify({'success': False, 'error': 'You are already a member of this household'}), 400
+        
+        # Check if already has a pending request
+        existing_request = db_session.query(JoinRequest).filter(
+            JoinRequest.UserID == user_id,
+            JoinRequest.HouseholdID == household.HouseholdID,
+            JoinRequest.Status == 'pending'
+        ).first()
+        
+        if existing_request:
+            return jsonify({'success': False, 'error': 'You already have a pending request for this household'}), 400
+        
+        # Create join request
+        join_request = JoinRequest(
+            UserID=user_id,
+            HouseholdID=household.HouseholdID,
+            Message=message if message else None
+        )
+        db_session.add(join_request)
+        db_session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Request sent to join "{household.HouseholdName}". Waiting for approval.'
+        })
+    except Exception as e:
+        db_session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db_session.close()
+
+
+@settings_bp.route('/household/requests/pending', methods=['GET'])
+def get_user_pending_requests():
+    """Get the current user's pending join requests"""
+    if not session.get('logged_in'):
+        return jsonify({'success': False, 'error': 'Not logged in'}), 401
+
+    user_id = session.get('user_id')
+    db_session = get_session()
+    
+    try:
+        from db.schema.join_request import JoinRequest
+        
+        requests = db_session.query(JoinRequest, Household).join(Household).filter(
+            JoinRequest.UserID == user_id,
+            JoinRequest.Status == 'pending'
+        ).all()
+        
+        request_list = [{
+            'id': req.RequestID,
+            'householdId': req.HouseholdID,
+            'householdName': household.HouseholdName,
+            'status': req.Status,
+            'createdAt': req.CreatedAt.isoformat() if req.CreatedAt else None
+        } for req, household in requests]
+        
+        return jsonify({
+            'success': True,
+            'requests': request_list
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db_session.close()
+
+
+@settings_bp.route('/household/requests/<int:request_id>/cancel', methods=['POST'])
+def cancel_join_request(request_id):
+    """Cancel a pending join request"""
+    if not session.get('logged_in'):
+        return jsonify({'success': False, 'error': 'Not logged in'}), 401
+
+    user_id = session.get('user_id')
+    db_session = get_session()
+    
+    try:
+        from db.schema.join_request import JoinRequest
+        
+        join_req = db_session.query(JoinRequest).filter(
+            JoinRequest.RequestID == request_id,
+            JoinRequest.UserID == user_id,
+            JoinRequest.Status == 'pending'
+        ).first()
+        
+        if not join_req:
+            return jsonify({'success': False, 'error': 'Request not found'}), 404
+        
+        db_session.delete(join_req)
+        db_session.commit()
+        
+        return jsonify({'success': True, 'message': 'Request cancelled'})
+    except Exception as e:
+        db_session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db_session.close()

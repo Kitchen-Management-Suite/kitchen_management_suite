@@ -32,7 +32,7 @@ from werkzeug.security import generate_password_hash
 from db.server import get_session, init_database
 from db.schema import (
     User, UserProfile, UserNutrition, Role, Household, Member, 
-    Pantry, Item, Recipe, Adds, Authors, Holds
+    Pantry, Item, Recipe, Adds, Authors, Holds, JoinRequest
 )
 
 fake = Faker()
@@ -858,8 +858,11 @@ class HouseholdOrganizer:
                 household_name = f"{members[0].FirstName}'s Home"
                 household_type = "solo"
             
-            # Create household
+            # Create household with join code
             household = Household(HouseholdName=household_name)
+            household.generate_join_code()
+            # 70% of households have join codes enabled
+            household.JoinCodeEnabled = random.random() < 0.7
             session.add(household)
             session.flush()
             
@@ -1258,6 +1261,69 @@ def create_cross_household_edge_cases(session, all_users, households, items):
     print("✅ Created cross-household edge cases")
 
 
+def create_join_requests(session, all_users, households):
+    """Create realistic pending join requests"""
+    
+    print("   Creating pending join requests...")
+    join_requests = []
+    
+    # Get all household IDs and their members
+    household_membership = {}
+    for household, household_users, _ in households:
+        household_membership[household.HouseholdID] = {u.UserID for u in household_users}
+    
+    # 15-30% of users have pending join requests to households they're not in
+    num_requesters = random.randint(len(all_users) // 7, len(all_users) // 3)
+    requesting_users = random.sample(all_users, min(num_requesters, len(all_users)))
+    
+    messages = [
+        "Hi! I'd love to join your household to share recipes and manage groceries together.",
+        "Hey, I'm interested in joining. I'm a great cook!",
+        "Would love to be part of your household. Looking forward to contributing!",
+        "Hi there! Can I join your household?",
+        "I'm friends with some of your members and would like to join.",
+        None,  # Some requests have no message
+        None,
+        None
+    ]
+    
+    for user in requesting_users:
+        # Get households this user is NOT a member of
+        user_household_ids = set()
+        for hh_id, member_ids in household_membership.items():
+            if user.UserID in member_ids:
+                user_household_ids.add(hh_id)
+        
+        available_households = [
+            h for h, _, _ in households 
+            if h.HouseholdID not in user_household_ids
+        ]
+        
+        if available_households:
+            # User requests to join 1-2 households
+            num_requests = random.randint(1, min(2, len(available_households)))
+            target_households = random.sample(available_households, num_requests)
+            
+            for target_household in target_households:
+                # Create request from 0-30 days ago
+                days_ago = random.randint(0, 30)
+                created_at = datetime.datetime.now() - datetime.timedelta(days=days_ago)
+                
+                join_request = JoinRequest(
+                    UserID=user.UserID,
+                    HouseholdID=target_household.HouseholdID,
+                    Status='pending',
+                    Message=random.choice(messages),
+                    CreatedAt=created_at
+                )
+                join_requests.append(join_request)
+    
+    session.add_all(join_requests)
+    session.commit()
+    print(f"✓ Created {len(join_requests)} pending join requests")
+    return join_requests
+
+
 def populate_database(num_users):
     """Main population function"""
     
@@ -1347,6 +1413,9 @@ def populate_database(num_users):
         print("🔀 Creating edge cases...")
         create_cross_household_edge_cases(session, all_users, households, items)
         
+        print("📬 Creating join requests...")
+        create_join_requests(session, all_users, households)
+        
         # Print summary
         print("\n" + "="*60)
         print("📊 DATABASE POPULATION SUMMARY")
@@ -1363,7 +1432,13 @@ def populate_database(num_users):
         for h_type, count in household_types.items():
             print(f"  - {h_type.title()}:       {count}")
         
+        # Count households with join codes enabled
+        enabled_codes = session.query(Household).filter_by(JoinCodeEnabled=True).count()
+        print(f"  - With Join Code: {enabled_codes}")
+        
         print(f"Members:            {session.query(Member).count()}")
+        print(f"Join Requests:      {session.query(JoinRequest).count()}")
+        print(f"  - Pending:        {session.query(JoinRequest).filter_by(Status='pending').count()}")
         print(f"Pantries:           {session.query(Pantry).count()}")
         print(f"Items:              {session.query(Item).count()}")
         print(f"Recipes:            {session.query(Recipe).count()}")
