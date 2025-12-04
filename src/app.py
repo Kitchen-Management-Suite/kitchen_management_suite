@@ -23,6 +23,7 @@ from dotenv import load_dotenv
 
 # load environment variables
 load_dotenv()
+
 from db.server import engine, Base, init_database, get_session
 
 # schema imports
@@ -43,6 +44,7 @@ from blueprints.recipes import recipes_bp
 from blueprints.calorieTracker import calorie_tracker_bp
 from blueprints.pantry import pantry_bp
 from blueprints.userProfileManagment import manage_user_profile_bp
+from blueprints.settings import settings_bp
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
@@ -62,6 +64,7 @@ app.register_blueprint(recipes_bp)
 app.register_blueprint(pantry_bp)
 app.register_blueprint(calorie_tracker_bp)
 app.register_blueprint(manage_user_profile_bp)
+app.register_blueprint(settings_bp)
 
 
 # register navbar w/ context processor (inject w/ existing variables)
@@ -73,13 +76,236 @@ def inject_navbar():
 
 @app.route("/")
 def index():
-    """handle index route"""    
+    """handle index route"""
     if flaskSession.get('logged_in'):
-        return render_template("index.html")
+        user_id = session.get('user_id')
+        current_household_id = session.get('current_household_id')
+        db_session = get_session()
+
+        try:
+            from db.schema.household import Household
+            from db.schema.member import Member
+            from db.schema.pantry import Pantry
+            from db.schema.adds import Adds
+            from db.schema.item import Item
+            from db.schema.holds import Holds
+            from db.schema.authors import Authors
+            from db.schema.recipe import Recipe
+            from sqlalchemy import func, distinct, and_
+            from datetime import datetime, timedelta
+            from collections import defaultdict
+
+            # Initialize metrics
+            metrics = {
+                'total_households': 0,
+                'current_household': None,
+                'pantry_items_count': 0,
+                'household_recipes_count': 0,
+                'user_recipes_count': 0,
+                'recent_activity': [],
+                'household_members_count': 0,
+                'suggested_recipes': [],
+                'expiring_soon': [],
+                'shopping_list': [],
+                'top_contributors': []
+            }
+
+            # Get total households user is part of
+            user_households = db_session.query(Member).filter(
+                Member.UserID == user_id
+            ).all()
+            metrics['total_households'] = len(user_households)
+
+            # If no current household is set but user has households, set the first one
+            if not current_household_id and user_households:
+                current_household_id = user_households[0].HouseholdID
+                session['current_household_id'] = current_household_id
+
+            if current_household_id:
+                # Get current household details
+                current_household = db_session.query(Household).get(current_household_id)
+                metrics['current_household'] = current_household
+
+                # Get household member count
+                members_count = db_session.query(func.count(Member.MemberID)).filter(
+                    Member.HouseholdID == current_household_id
+                ).scalar()
+                metrics['household_members_count'] = members_count or 0
+
+                # Get pantry statistics
+                pantry = db_session.query(Pantry).filter(
+                    Pantry.HouseholdID == current_household_id
+                ).first()
+
+                if pantry:
+                    # Count unique items in pantry
+                    unique_items = db_session.query(func.count(distinct(Adds.ItemID))).filter(
+                        Adds.PantryID == pantry.PantryID
+                    ).scalar()
+                    metrics['pantry_items_count'] = unique_items or 0
+
+                    # Get recent activity (additions from all members in last 14 days)
+                    from db.schema.user import User
+                    fourteen_days_ago = datetime.now().date() - timedelta(days=14)
+                    recent_activity = db_session.query(
+                        User.Username,
+                        Item.ItemName,
+                        Adds.Quantity,
+                        Adds.Unit,
+                        Adds.ItemInDate
+                    ).join(Item).join(User).filter(
+                        Adds.PantryID == pantry.PantryID,
+                        Adds.ItemInDate >= fourteen_days_ago
+                    ).order_by(Adds.ItemInDate.desc()).limit(10).all()
+
+                    metrics['recent_activity'] = [
+                        {
+                            'user': activity.Username,
+                            'item': activity.ItemName,
+                            'quantity': activity.Quantity,
+                            'unit': activity.Unit or 'pieces',
+                            'date': activity.ItemInDate,
+                            'days_ago': (datetime.now().date() - activity.ItemInDate).days
+                        } for activity in recent_activity
+                    ]
+
+                    # Get items added more than 60 days ago (potentially expiring)
+                    sixty_days_ago = datetime.now().date() - timedelta(days=60)
+                    old_items = db_session.query(
+                        Item.ItemName,
+                        func.min(Adds.ItemInDate).label('oldest_date'),
+                        func.sum(Adds.Quantity).label('total_qty'),
+                        Adds.Unit
+                    ).join(Adds).filter(
+                        Adds.PantryID == pantry.PantryID,
+                        Adds.ItemInDate < sixty_days_ago
+                    ).group_by(Item.ItemName, Adds.Unit).limit(8).all()
+
+                    metrics['expiring_soon'] = [
+                        {
+                            'name': item.ItemName,
+                            'quantity': item.total_qty,
+                            'unit': item.Unit or 'pieces',
+                            'days_old': (datetime.now().date() - item.oldest_date).days
+                        } for item in old_items
+                    ]
+
+                    # Build pantry items dict for recipe matching
+                    pantry_items_raw = db_session.query(
+                        Item.ItemName,
+                        Adds.Quantity,
+                        Adds.Unit
+                    ).join(Adds).filter(
+                        Adds.PantryID == pantry.PantryID
+                    ).all()
+
+                    pantry_items_dict = defaultdict(list)
+                    for item_name, qty, unit in pantry_items_raw:
+                        pantry_items_dict[item_name.lower()].append((qty, unit or 'pieces'))
+
+                    # Get top 3 recipes from household that match pantry
+                    household_recipe_ids = db_session.query(Holds.RecipeID).filter(
+                        Holds.HouseholdID == current_household_id
+                    ).all()
+                    household_recipe_ids = [r[0] for r in household_recipe_ids]
+
+                    if household_recipe_ids:
+                        household_recipes = db_session.query(Recipe).filter(
+                            Recipe.RecipeID.in_(household_recipe_ids)
+                        ).limit(10).all()
+
+                        # Score recipes based on pantry match
+                        scored_recipes = []
+                        for recipe in household_recipes:
+                            if recipe.RecipeBody and 'ingredients' in recipe.RecipeBody:
+                                ingredients = recipe.RecipeBody['ingredients']
+                                total_ingredients = len(ingredients)
+                                matched = 0
+
+                                for ing_key, ing_data in ingredients.items():
+                                    if isinstance(ing_data, dict):
+                                        ing_name = ing_data.get('id', ing_key).replace('-', ' ').lower()
+                                        if ing_name in pantry_items_dict:
+                                            matched += 1
+
+                                if total_ingredients > 0:
+                                    match_score = int((matched / total_ingredients) * 100)
+                                    scored_recipes.append({
+                                        'recipe': recipe,
+                                        'score': match_score,
+                                        'matched': matched,
+                                        'total': total_ingredients
+                                    })
+
+                        # Sort by score and take top 3
+                        scored_recipes.sort(key=lambda x: x['score'], reverse=True)
+                        metrics['suggested_recipes'] = scored_recipes[:3]
+
+                        # Generate shopping list from top recipe (if match < 100%)
+                        if scored_recipes and scored_recipes[0]['score'] < 100:
+                            top_recipe = scored_recipes[0]['recipe']
+                            missing_items = []
+
+                            if top_recipe.RecipeBody and 'ingredients' in top_recipe.RecipeBody:
+                                for ing_key, ing_data in top_recipe.RecipeBody['ingredients'].items():
+                                    if isinstance(ing_data, dict):
+                                        ing_name = ing_data.get('id', ing_key).replace('-', ' ')
+                                        if ing_name.lower() not in pantry_items_dict:
+                                            missing_items.append({
+                                                'name': ing_name.title(),
+                                                'amount': ing_data.get('amount', ''),
+                                                'unit': ing_data.get('unit', ''),
+                                                'recipe': top_recipe.RecipeName
+                                            })
+
+                            metrics['shopping_list'] = missing_items[:6]
+
+                    # Get top contributors (users who added most items in last 30 days)
+                    thirty_days_ago = datetime.now().date() - timedelta(days=30)
+                    top_contributors = db_session.query(
+                        User.Username,
+                        func.count(Adds.AddsID).label('additions_count')
+                    ).join(User).filter(
+                        Adds.PantryID == pantry.PantryID,
+                        Adds.ItemInDate >= thirty_days_ago
+                    ).group_by(User.Username).order_by(func.count(Adds.AddsID).desc()).limit(5).all()
+
+                    metrics['top_contributors'] = [
+                        {
+                            'username': contrib.Username,
+                            'count': contrib.additions_count
+                        } for contrib in top_contributors
+                    ]
+
+                # Get household recipe count
+                household_recipe_count = db_session.query(func.count(Holds.RecipeID)).filter(
+                    Holds.HouseholdID == current_household_id
+                ).scalar()
+                metrics['household_recipes_count'] = household_recipe_count or 0
+
+            # Get user's total authored recipes
+            user_recipe_count = db_session.query(func.count(distinct(Authors.RecipeID))).filter(
+                Authors.UserID == user_id
+            ).scalar()
+            metrics['user_recipes_count'] = user_recipe_count or 0
+
+            # Debug output
+            print(f"DEBUG: metrics keys: {metrics.keys()}")
+            print(f"DEBUG: current_household: {metrics.get('current_household')}")
+            print(f"DEBUG: current_household_id from session: {current_household_id}")
+            print(f"DEBUG: total_households: {metrics.get('total_households')}")
+
+            return render_template("index.html", metrics=metrics)
+
+        except Exception as e:
+            print(f"Error loading home metrics: {e}")
+            import traceback
+            traceback.print_exc()
+            return render_template("index.html", metrics=None)
+        finally:
+            db_session.close()
     else:
         return render_template("public.html")
-
-##Enter End point here for 
 
 @app.route("/pantry")
 def pantry():
@@ -105,32 +331,43 @@ def recipes():
 
     return render_template(url_for('recipes.recipes'))
 
-@app.route("/account")
+@app.route("/settings")
 def account():
-    """handle account route"""
-    if not session.get('logged_in'):
-        flash('Please log in to access your account.', 'error')
-        return redirect(url_for('auth.login'))
-    
-    return render_template("account.html")
+    """handle route to settings"""
+    return redirect(url_for('settings.settings'))
 
-@app.route("/switch_household/<int:household_id>")
+@app.route("/switch_household/<int:household_id>", methods=['GET', 'POST'])
 def switch_household(household_id):
     """Switch the current household for the user session"""
     if not session.get('logged_in'):
         flash('Please log in to switch households.', 'error')
         return redirect(url_for('auth.login'))
-    
-    households = get_user_households()
-    household_ids = [h.HouseholdID for h in households]
-    
-    if household_id in household_ids:
-        set_current_household_id(household_id)
-        flash('Household switched successfully', 'success')
-    else:
-        flash('You do not have access to this household', 'error')
-    
-    return redirect(request.referrer)
+
+    user_id = session.get('user_id')
+    db_session = get_session()
+
+    try:
+        from db.schema.member import Member
+
+        #verify user is a member of this household
+        member = db_session.query(Member).filter(
+            Member.UserID == user_id,
+            Member.HouseholdID == household_id
+        ).first()
+
+        if member:
+            set_current_household_id(household_id)
+            flash('Household switched successfully', 'success')
+        else:
+            flash('You do not have access to this household', 'error')
+    except Exception as e:
+        flash(f'Error switching household: {str(e)}', 'error')
+    finally:
+        db_session.close()
+
+    # redirect back to the page the user came from, or to index if no referrer
+    next_url = request.args.get('next') or request.referrer or url_for('index')
+    return redirect(next_url)
 
 @app.route("/household/manage")
 def manage_household():
@@ -139,24 +376,231 @@ def manage_household():
         flash('Please log in to manage households.', 'error')
         return redirect(url_for('auth.login'))
 
-    # Get households with role information
-    user_households = get_user_households_with_roles()
+    user_id = session.get('user_id')
+    db_session = get_session()
+    
+    try:
+        from db.schema.household import Household
+        from db.schema.member import Member
+        from db.schema.role import Role
+        from db.schema.join_request import JoinRequest
+        from db.schema.user import User
+        from sqlalchemy import func
+        
+        # Get user households with roles
+        user_households_data = db_session.query(
+            Household,
+            Member,
+            Role
+        ).join(
+            Member, Household.HouseholdID == Member.HouseholdID
+        ).join(
+            Role, Member.RoleID == Role.RoleID
+        ).filter(
+            Member.UserID == user_id
+        ).all()
+        
+        # Format data for template
+        user_households = []
+        for household, member, role in user_households_data:
+            # Count pending requests for this household if user is Owner
+            pending_count = 0
+            if role.RoleName == 'Owner':
+                pending_count = db_session.query(func.count(JoinRequest.RequestID)).filter(
+                    JoinRequest.HouseholdID == household.HouseholdID,
+                    JoinRequest.Status == 'pending'
+                ).scalar() or 0
+            
+            user_households.append({
+                'id': household.HouseholdID,
+                'name': household.HouseholdName,
+                'role': role.RoleName,
+                'roleId': role.RoleID,
+                'joinCode': household.JoinCode if role.RoleName == 'Owner' else None,
+                'joinCodeEnabled': household.JoinCodeEnabled if role.RoleName == 'Owner' else False,
+                'pendingRequests': pending_count
+            })
+        
+        # Get user's pending join requests (to other households)
+        pending_requests = db_session.query(JoinRequest, Household).join(Household).filter(
+            JoinRequest.UserID == user_id,
+            JoinRequest.Status == 'pending'
+        ).all()
+        
+        pending_requests_data = [{
+            'id': req.RequestID,
+            'householdName': hh.HouseholdName,
+            'createdAt': req.CreatedAt.isoformat() if req.CreatedAt else None
+        } for req, hh in pending_requests]
+        
+        current_household_id = session.get('current_household_id')
+        
+        return render_template('manage_household.html',
+                             user_households=user_households,
+                             pending_requests=pending_requests_data,
+                             current_household_id=current_household_id)
+    
+    except Exception as e:
+        flash(f'Error loading households: {str(e)}', 'error')
+        return render_template('manage_household.html',
+                             user_households=[],
+                             pending_requests=[],
+                             current_household_id=None)
+    finally:
+        db_session.close()
 
-    # NEED TO IMPLEMENT HOUSEHOLD CREATION AND JOIN FUNCTIONALITY
-    return render_template('manage_household.html', user_households=user_households)
+@app.route("/household/create", methods=['GET', 'POST'])
+def create_household():
+    """Create a new household"""
+    if not session.get('logged_in'):
+        flash('Please log in to create a household.', 'error')
+        return redirect(url_for('auth.login'))
+
+    if request.method == 'POST':
+        user_id = session.get('user_id')
+        household_name = request.form.get('household_name', '').strip()
+        
+        if not household_name:
+            flash('Household name is required.', 'error')
+            return redirect(url_for('manage_household'))
+
+        db_session = get_session()
+        try:
+            from db.schema.household import Household
+            from db.schema.member import Member
+            from db.schema.role import Role
+            from db.schema.pantry import Pantry
+            
+            #check if household name already exists
+            existing_household = db_session.query(Household).filter(
+                Household.HouseholdName == household_name
+            ).first()
+            
+            if existing_household:
+                flash('A household with this name already exists.', 'error')
+                return redirect(url_for('manage_household'))
+            
+            #get Owner role
+            owner_role = db_session.query(Role).filter(Role.RoleName == 'Owner').first()
+            if not owner_role:
+                flash('Owner role not found in database.', 'error')
+                return redirect(url_for('manage_household'))
+            
+            #create new household with join code
+            new_household = Household(HouseholdName=household_name)
+            new_household.generate_join_code()
+            new_household.JoinCodeEnabled = True
+            db_session.add(new_household)
+            db_session.flush()
+            
+            #create pantry for the household
+            new_pantry = Pantry(HouseholdID=new_household.HouseholdID)
+            db_session.add(new_pantry)
+            
+            #add user as member with owner role
+            new_member = Member(
+                UserID=user_id,
+                HouseholdID=new_household.HouseholdID,
+                RoleID=owner_role.RoleID
+            )
+            db_session.add(new_member)
+            
+            db_session.commit()
+            
+            #set as current household
+            session['current_household_id'] = new_household.HouseholdID
+            
+            flash(f'Household "{household_name}" created successfully!', 'success')
+            return redirect(url_for('manage_household'))
+            
+        except Exception as e:
+            db_session.rollback()
+            flash(f'Error creating household: {str(e)}', 'error')
+            return redirect(url_for('manage_household'))
+        finally:
+            db_session.close()
+    
+    return redirect(url_for('manage_household'))
+
+@app.route("/household/join", methods=['GET', 'POST'])
+def join_household():
+    """Join an existing household"""
+    if not session.get('logged_in'):
+        flash('Please log in to join a household.', 'error')
+        return redirect(url_for('auth.login'))
+
+    if request.method == 'POST':
+        user_id = session.get('user_id')
+        join_code = request.form.get('join_code', '').strip()
+        
+        if not join_code:
+            flash('Household name is required.', 'error')
+            return redirect(url_for('manage_household'))
+
+        db_session = get_session()
+        try:
+            from db.schema.household import Household
+            from db.schema.member import Member
+            from db.schema.role import Role
+            from sqlalchemy import func
+            
+            #try to find household by name 
+            join_code_clean = join_code.strip()
+            household = db_session.query(Household).filter(
+                func.lower(Household.HouseholdName) == func.lower(join_code_clean)
+            ).first()
+            
+            if not household:
+                flash(f'Household "{join_code_clean}" not found. Please check the name and try again.', 'error')
+                return redirect(url_for('manage_household'))
+            
+            #check if user is already a member
+            existing_member = db_session.query(Member).filter(
+                Member.UserID == user_id,
+                Member.HouseholdID == household.HouseholdID
+            ).first()
+            
+            if existing_member:
+                flash('You are already a member of this household.', 'error')
+                return redirect(url_for('manage_household'))
+            
+            #get Member role
+            member_role = db_session.query(Role).filter(Role.RoleName == 'Member').first()
+            if not member_role:
+                flash('Member role not found in database.', 'error')
+                return redirect(url_for('manage_household'))
+            
+            #add user as member
+            new_member = Member(
+                UserID=user_id,
+                HouseholdID=household.HouseholdID,
+                RoleID=member_role.RoleID
+            )
+            db_session.add(new_member)
+            db_session.commit()
+            
+            #set as current household if user has no current household
+            if not session.get('current_household_id'):
+                session['current_household_id'] = household.HouseholdID
+            
+            flash(f'Successfully joined "{household.HouseholdName}"!', 'success')
+            return redirect(url_for('manage_household'))
+            
+        except Exception as e:
+            db_session.rollback()
+            flash(f'Error joining household: {str(e)}', 'error')
+            return redirect(url_for('manage_household'))
+        finally:
+            db_session.close()
+    
+    return redirect(url_for('manage_household'))
 
 @app.route("/household/settings")
 def household_settings():
-    """Handle household settings route - admin only"""
+    """Handle household settings route - Owner or admin only"""
     if not session.get('logged_in'):
         flash('Please log in to access household settings.', 'error')
         return redirect(url_for('auth.login'))
-
-    # Check if user is admin in current household
-    user_role = get_current_user_role()
-    if user_role != 'admin':
-        flash('You must be an admin to access household settings.', 'error')
-        return redirect(url_for('index'))
 
     # Check if user is in any households
     households = get_user_households()
@@ -164,8 +608,88 @@ def household_settings():
         flash('You need to join a household first.', 'error')
         return redirect(url_for('index'))
 
-    return render_template('household_settings.html')
+    # Check if user is Owner in current household
+    user_role = get_current_user_role()
+    if user_role not in ['Owner', 'admin']:
+        flash('You must be an Owner to access household settings.', 'error')
+        return redirect(url_for('index'))
 
+    user_id = session.get('user_id')
+    current_household_id = session.get('current_household_id')
+    db_session = get_session()
+
+    try:
+        from db.schema.household import Household
+        from db.schema.member import Member
+        from db.schema.role import Role
+        from db.schema.user import User
+        from db.schema.pantry import Pantry
+        from db.schema.adds import Adds
+        from sqlalchemy import func
+
+        # Get current household
+        current_household = db_session.query(Household).get(current_household_id)
+        if not current_household:
+            flash('Household not found.', 'error')
+            return redirect(url_for('index'))
+
+        # Get all members with their roles and user info
+        members_data = db_session.query(
+            User.UserID,
+            User.Username,
+            User.FirstName,
+            User.LastName,
+            User.Email,
+            Role.RoleName,
+            Role.RoleID,
+            Member.MemberID
+        ).join(
+            Member, User.UserID == Member.UserID
+        ).join(
+            Role, Member.RoleID == Role.RoleID
+        ).filter(
+            Member.HouseholdID == current_household_id
+        ).all()
+
+        members = [{
+            'user_id': m.UserID,
+            'member_id': m.MemberID,
+            'username': m.Username,
+            'first_name': m.FirstName or '',
+            'last_name': m.LastName or '',
+            'email': m.Email or '',
+            'role': m.RoleName,
+            'role_id': m.RoleID,
+            'is_current_user': m.UserID == user_id
+        } for m in members_data]
+
+        # Get available roles
+        roles = db_session.query(Role).all()
+        roles_list = [{'id': r.RoleID, 'name': r.RoleName} for r in roles]
+
+        # Get pantry item count
+        pantry = db_session.query(Pantry).filter(
+            Pantry.HouseholdID == current_household_id
+        ).first()
+
+        pantry_item_count = 0
+        if pantry:
+            pantry_item_count = db_session.query(func.count(Adds.AddsID)).filter(
+                Adds.PantryID == pantry.PantryID
+            ).scalar() or 0
+
+        return render_template('household_settings.html',
+                             household=current_household,
+                             members=members,
+                             roles=roles_list,
+                             pantry_item_count=pantry_item_count,
+                             user_role=user_role)
+
+    except Exception as e:
+        flash(f'Error loading household settings: {str(e)}', 'error')
+        return redirect(url_for('index'))
+    finally:
+        db_session.close()
 
 
 if __name__ == "__main__":

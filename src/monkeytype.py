@@ -33,7 +33,7 @@ from werkzeug.security import generate_password_hash
 from db.server import get_session, init_database
 from db.schema import (
     User, UserProfile, UserNutrition, Role, Household, Member, 
-    Pantry, Item, Recipe, Adds, Authors, Holds
+    Pantry, Item, Recipe, Adds, Authors, Holds, JoinRequest
 )
 
 fake = Faker()
@@ -862,8 +862,11 @@ class HouseholdOrganizer:
                 household_name = f"{members[0].FirstName}'s Home"
                 household_type = "solo"
             
-            # Create household
+            # Create household with join code
             household = Household(HouseholdName=household_name)
+            household.generate_join_code()
+            # 70% of households have join codes enabled
+            household.JoinCodeEnabled = random.random() < 0.7
             session.add(household)
             session.flush()
             
@@ -912,7 +915,20 @@ class HouseholdOrganizer:
 
 class PantryPopulator:
     """Populates pantries with realistic item distributions"""
-    
+
+    # Define appropriate units for different item categories
+    UNIT_MAPPINGS = {
+        "proteins": ["lb", "lbs", "oz", "pieces"],
+        "dairy": ["cup", "cups", "oz", "stick", "sticks", "pieces"],
+        "vegetables": ["pieces", "lbs", "oz", "bunch"],
+        "fruits": ["pieces", "lbs", "oz"],
+        "grains": ["lb", "lbs", "oz", "cups"],
+        "pantry_staples": ["cup", "cups", "tbsp", "oz", "bottle"],
+        "spices": ["oz", "tsp", "tbsp", "jar"],
+        "nuts_seeds": ["oz", "cup", "cups", "lb"],
+        "baking": ["cup", "cups", "oz", "tsp", "tbsp"]
+    }
+
     @staticmethod
     def create_pantry(session, household):
         """Create pantry for household"""
@@ -923,16 +939,84 @@ class PantryPopulator:
         session.add(pantry)
         session.flush()
         return pantry
-    
+
+    @staticmethod
+    def _get_appropriate_unit_and_quantity(item_name):
+        """Get realistic unit and quantity for a pantry item based on its category"""
+        item_name_lower = item_name.lower()
+
+        # Special cases for specific items with realistic quantities
+        special_items = {
+            "butter": (random.uniform(1, 4), "stick"),
+            "eggs": (random.randint(6, 24), "pieces"),
+            "milk": (random.uniform(0.5, 1), "gallon"),
+            "garlic": (random.randint(3, 12), "clove"),
+            "olive oil": (random.uniform(12, 32), "oz"),
+            "vegetable oil": (random.uniform(12, 32), "oz"),
+            "canola oil": (random.uniform(12, 32), "oz"),
+            "salt": (random.uniform(8, 26), "oz"),
+            "black pepper": (random.uniform(1, 4), "oz"),
+            "sugar": (random.uniform(1, 5), "cup"),
+            "brown sugar": (random.uniform(1, 5), "cup"),
+            "flour": (random.uniform(2, 10), "cup"),
+            "rice": (random.uniform(1, 5), "cup"),
+            "pasta": (random.randint(8, 32), "oz"),
+            "chicken breast": (random.uniform(1, 3), "lb"),
+            "ground beef": (random.uniform(1, 3), "lb"),
+            "salmon": (random.uniform(0.5, 2), "lb"),
+            "shrimp": (random.uniform(0.5, 2), "lb"),
+            "bacon": (random.randint(12, 24), "oz"),
+            "cheese": (random.uniform(4, 16), "oz"),
+            "yogurt": (random.randint(4, 32), "oz"),
+            "heavy cream": (random.uniform(8, 32), "oz"),
+        }
+
+        # Check for special cases (partial name match)
+        for special_item, (qty_range, unit) in special_items.items():
+            if special_item in item_name_lower:
+                return (qty_range, unit)
+
+        # Determine category from ingredient pool
+        for category, ingredients in INGREDIENT_POOL.items():
+            if item_name_lower in [ing.lower() for ing in ingredients.keys()]:
+                # Get appropriate units for this category
+                possible_units = PantryPopulator.UNIT_MAPPINGS.get(category, ["pieces"])
+                unit = random.choice(possible_units)
+
+                # Determine quantity range based on unit type
+                if unit in ["pieces", "clove", "bunch"]:
+                    quantity = float(random.randint(1, 12))
+                elif unit in ["stick", "sticks"]:
+                    quantity = float(random.randint(1, 4))
+                elif unit in ["cup", "cups"]:
+                    quantity = round(random.uniform(0.5, 8), 1)
+                elif unit in ["tbsp", "tablespoon"]:
+                    quantity = round(random.uniform(1, 12), 1)
+                elif unit in ["tsp", "teaspoon"]:
+                    quantity = round(random.uniform(1, 8), 1)
+                elif unit in ["oz", "ounce"]:
+                    quantity = round(random.uniform(2, 32), 1)
+                elif unit in ["lb", "lbs", "pound"]:
+                    quantity = round(random.uniform(0.5, 5), 1)
+                elif unit in ["gallon", "bottle", "jar"]:
+                    quantity = float(random.randint(1, 2))
+                else:
+                    quantity = round(random.uniform(1, 10), 1)
+
+                return (quantity, unit)
+
+        # Default fallback
+        return (float(random.randint(1, 10)), "pieces")
+
     @staticmethod
     def add_items_to_pantry(session, pantry, items, household_users):
-        """Add items to pantry with realistic user additions"""
+        """Add items to pantry with realistic user additions and proper units"""
         # Each pantry gets 15-40 items
         num_items = random.randint(15, 40)
         selected_items = random.sample(items, min(num_items, len(items)))
-        
+
         adds_records = []
-        
+
         for item in selected_items:
             # Most items added by 1 person, occasionally 2-3
             roll = random.random()
@@ -942,23 +1026,26 @@ class PantryPopulator:
                 num_adders = 2
             else:
                 num_adders = 3
-            
+
             adders = random.sample(household_users, min(num_adders, len(household_users)))
-            
+
             for user in adders:
-                quantity = random.randint(1, 10)
+                # Get appropriate unit and quantity for this item
+                quantity, unit = PantryPopulator._get_appropriate_unit_and_quantity(item.ItemName)
+
                 days_ago = random.randint(0, 60)
                 date_added = datetime.date.today() - datetime.timedelta(days=days_ago)
-                
+
                 add = Adds(
                     UserID=user.UserID,
                     PantryID=pantry.PantryID,
                     ItemID=item.ItemID,
                     Quantity=quantity,
+                    Unit=unit,
                     ItemInDate=date_added
                 )
                 adds_records.append(add)
-        
+
         session.add_all(adds_records)
         session.commit()
         return adds_records
@@ -1152,26 +1239,93 @@ def create_cross_household_edge_cases(session, all_users, households, items):
     # Edge case 2: Same items in multiple pantries by same user
     for user in random.sample(multi_household_users, min(5, len(multi_household_users))):
         user_households = session.query(Member).filter_by(UserID=user.UserID).all()
-        
+
         if len(user_households) >= 2:
             item = random.choice(items)
-            
+
             for member in user_households[:2]:
                 household = session.query(Household).get(member.HouseholdID)
                 pantry = household.pantry
-                
+
                 if pantry:
+                    # Get appropriate unit and quantity for this item
+                    quantity, unit = PantryPopulator._get_appropriate_unit_and_quantity(item.ItemName)
+
                     add = Adds(
                         UserID=user.UserID,
                         PantryID=pantry.PantryID,
                         ItemID=item.ItemID,
-                        Quantity=random.randint(1, 5),
+                        Quantity=quantity,
+                        Unit=unit,
                         ItemInDate=datetime.date.today()
                     )
                     session.add(add)
     
     session.commit()
     print("✅ Created cross-household edge cases")
+
+
+def create_join_requests(session, all_users, households):
+    """Create realistic pending join requests"""
+    
+    print("   Creating pending join requests...")
+    join_requests = []
+    
+    # Get all household IDs and their members
+    household_membership = {}
+    for household, household_users, _ in households:
+        household_membership[household.HouseholdID] = {u.UserID for u in household_users}
+    
+    # 15-30% of users have pending join requests to households they're not in
+    num_requesters = random.randint(len(all_users) // 7, len(all_users) // 3)
+    requesting_users = random.sample(all_users, min(num_requesters, len(all_users)))
+    
+    messages = [
+        "Hi! I'd love to join your household to share recipes and manage groceries together.",
+        "Hey, I'm interested in joining. I'm a great cook!",
+        "Would love to be part of your household. Looking forward to contributing!",
+        "Hi there! Can I join your household?",
+        "I'm friends with some of your members and would like to join.",
+        None,  # Some requests have no message
+        None,
+        None
+    ]
+    
+    for user in requesting_users:
+        # Get households this user is NOT a member of
+        user_household_ids = set()
+        for hh_id, member_ids in household_membership.items():
+            if user.UserID in member_ids:
+                user_household_ids.add(hh_id)
+        
+        available_households = [
+            h for h, _, _ in households 
+            if h.HouseholdID not in user_household_ids
+        ]
+        
+        if available_households:
+            # User requests to join 1-2 households
+            num_requests = random.randint(1, min(2, len(available_households)))
+            target_households = random.sample(available_households, num_requests)
+            
+            for target_household in target_households:
+                # Create request from 0-30 days ago
+                days_ago = random.randint(0, 30)
+                created_at = datetime.datetime.now() - datetime.timedelta(days=days_ago)
+                
+                join_request = JoinRequest(
+                    UserID=user.UserID,
+                    HouseholdID=target_household.HouseholdID,
+                    Status='pending',
+                    Message=random.choice(messages),
+                    CreatedAt=created_at
+                )
+                join_requests.append(join_request)
+    
+    session.add_all(join_requests)
+    session.commit()
+    print(f"✓ Created {len(join_requests)} pending join requests")
+    return join_requests
 
 
 def populate_database(num_users):
@@ -1263,6 +1417,9 @@ def populate_database(num_users):
         print("🔀 Creating edge cases...")
         create_cross_household_edge_cases(session, all_users, households, items)
         
+        print("📬 Creating join requests...")
+        create_join_requests(session, all_users, households)
+        
         # Print summary
         print("\n" + "="*60)
         print("📊 DATABASE POPULATION SUMMARY")
@@ -1279,7 +1436,13 @@ def populate_database(num_users):
         for h_type, count in household_types.items():
             print(f"  - {h_type.title()}:       {count}")
         
+        # Count households with join codes enabled
+        enabled_codes = session.query(Household).filter_by(JoinCodeEnabled=True).count()
+        print(f"  - With Join Code: {enabled_codes}")
+        
         print(f"Members:            {session.query(Member).count()}")
+        print(f"Join Requests:      {session.query(JoinRequest).count()}")
+        print(f"  - Pending:        {session.query(JoinRequest).filter_by(Status='pending').count()}")
         print(f"Pantries:           {session.query(Pantry).count()}")
         print(f"Items:              {session.query(Item).count()}")
         print(f"Recipes:            {session.query(Recipe).count()}")
