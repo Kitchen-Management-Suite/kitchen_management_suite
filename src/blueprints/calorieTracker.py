@@ -81,6 +81,25 @@ def addToLog(UserNutrition):
     finally:
         sqlSession.close() 
 
+def removeFromLog(nutritionID):
+    try:
+        uN = user_nutrition.UserNutrition
+        obj = sqlSession.query(uN).filter(uN.NutritionID == nutritionID).first()
+        print("OBJECT", obj)
+        if obj:
+            sqlSession.delete(obj)
+            sqlSession.commit()
+            sqlSession.expire_all()
+            print("Deleted Item Successfully?")
+        else:
+            raise Exception(f"!!! COULD NOT FIND ITEM WITH NUTRITION ID: {nutritionID} !!!")
+    except Exception as ex:
+        sqlSession.rollback()
+        flash("Attemped to remove an item which does not exist", "error")
+        print("Error in session dumbass",ex)
+    finally:
+        sqlSession.close()
+
 #Default display page for calorie Tracking  
 @calorie_tracker_bp.route('/calorieTracking', methods = ["GET", "POST"])
 def calorieTracking():#KNOWN BUG - reloading this page after adding an item will add it to the database twice :/ fix later
@@ -93,7 +112,18 @@ def calorieTracking():#KNOWN BUG - reloading this page after adding an item will
     now = datetime.now() 
     date = now.date()
     time = now.time()
-    if request.method == "POST":##Handles route for when new food entry is added
+
+    print("REDIRECT",request)
+
+    if "RemoveID" in request.args:
+            nutritionID = request.args.get("RemoveID")
+            removeFromLog(nutritionID)
+            response = redirect('/calorieTracking')
+            print("RESPONSE", response)
+            return response
+            # print("DELETED", nutritionID)
+
+    if request.method == "POST":##Handles route for when new food entry is added or deleted    
         try:
             allItemData = request.form["itemName"]
             newNutritionEntry = user_nutrition.UserNutrition(
@@ -155,6 +185,7 @@ def calorieTracking():#KNOWN BUG - reloading this page after adding an item will
     print(groupedByMealType)
     print(f"Loading User Daily Nutrition Values: {dashBoardValues}")
     # groupedByMealType = dict()#Used for testing return of no values
+    print("SHOULD BE RENDERING?")
     return render_template('calorieTracking.html', 
                            dashBoardValues = dashBoardValues, 
                            date = date,

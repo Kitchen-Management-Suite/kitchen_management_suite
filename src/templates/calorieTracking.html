@@ -49,9 +49,21 @@
         {% for mealType in orderOfMealType%}
         <div> 
           <h2 class = "meal-type-name-display"> {{mealType}}</h2>
-          {% for value2 in groupedByMealType[mealType] %}
-            <h3> {{value2}} </h3>
-          {% endfor %}
+          <div class = holdsMealCards>
+            {% for value2 in groupedByMealType[mealType] %}
+              <div class = "mealCard">
+                <h4> {{value2.ItemName}}</h4>
+                <p class = "recipe-meta">Calories: {{value2.CaloriesConsumed}} </p>
+                <p class = "recipe-meta">Carbs: {{value2.Carbs}} </p>
+                <p class = "recipe-meta">Protein: {{value2.Protein}} </p>
+                <p class = "recipe-meta">Fat: {{value2.Fat}} </p>
+                <h3> {{value2.NutritionID}}</h3>
+                <button class = "removeItem" id = {{value2.NutritionID}}> Remove </button>
+              </div>
+              <!-- <h3> {{value2}} </h3> -->
+            {% endfor %}
+          </div>
+          
         </div>
       {% endfor %}
       </div>

@@ -76,7 +76,7 @@ def searchByStr(searchText, **kwargs):#Will Need to sanitize search later#SUCH A
         "search_simple": 1, 
         "json": 1,
         "page": kwargs.get("page", 1),
-        "page_size": kwargs.get("page_size", 100),
+        "page_size": kwargs.get("page_size", 10),
         "complete": 1,
         "country": "united-states"
         # "countries": "united-states"

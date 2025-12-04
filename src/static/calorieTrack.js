@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const addMealButtons = document.querySelectorAll(".typeMealSelc")
     const defaultMealType = document.getElementById("defMealType")
     const addFoodToLog = document.getElementById("addFoodToLog")
+    const removeFoodItem = document.querySelectorAll(".removeItem")
 
     let curtClicked = defaultMealType
     //Default is hardcoded in calorieTracking html
@@ -33,6 +34,20 @@ document.addEventListener("DOMContentLoaded", () => {
             curtClicked = button;
             console.log(document.getElementsByName("MealType"))
             document.getElementsByName("MealType")[0].value = mealType//Should probably santize this later
+        })
+    });
+
+    removeFoodItem.forEach(button => {
+         button.addEventListener("click", (event) => {
+            // console.log("TEST");
+            // console.log(event.target);
+           nutritionId = button.id
+           console.log(nutritionId)
+        //    window.location.assign("/calorieTracking?RemoveID=9999");
+           fetch(`/calorieTracking?RemoveID=${nutritionId}`, {
+            // method: "POST"
+           });
+
         })
     });
 })
