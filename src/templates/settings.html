@@ -2,121 +2,20 @@
 
 {% block title %}KMS | Settings{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='settings.css') }}">
+{% block content %}
+<div id="settings-root"></div>
 {% endblock %}
 
-{% block content %}
-<div class="settings-page">
-  <h1>Settings</h1>
-
-  <section class="settings-section">
-    <h2>Profile</h2>
-    <form method="POST" action="{{ url_for('update_profile') }}">
-      <div class="form-row">
-        <label>First Name</label>
-        <input type="text" name="first_name" value="{{ user.FirstName or '' }}">
-      </div>
-      <div class="form-row">
-        <label>Last Name</label>
-        <input type="text" name="last_name" value="{{ user.LastName or '' }}">
-      </div>
-      <div class="form-row">
-        <label>Height (cm)</label>
-        <input type="number" name="height" step="0.1" min="0" value="{{ profile.Height or '' }}">
-      </div>
-      <div class="form-row">
-        <label>Weight (kg)</label>
-        <input type="number" name="weight" step="0.1" min="0" value="{{ profile.Weight or '' }}">
-      </div>
-      <div class="form-row">
-        <label>Calorie Goal</label>
-        <input type="number" name="calorie_goal" min="0" value="{{ profile.CalorieGoal or '' }}">
-      </div>
-      <div class="form-row">
-        <label>Dietary Preferences</label>
-        <input type="text" name="dietary_preferences" value="{{ profile.DietaryPreferences or '' }}">
-      </div>
-      <div class="form-row">
-        <label>Allergies</label>
-        <input type="text" name="allergies" value="{{ profile.Allergies or '' }}">
-      </div>
-      <button type="submit">Update Profile</button>
-    </form>
-  </section>
-
-  <section class="settings-section">
-    <h2>Account</h2>
-    <form method="POST" action="{{ url_for('update_account') }}">
-      <div class="form-row">
-        <label>Username</label>
-        <input type="text" name="username" required value="{{ user.Username or '' }}">
-      </div>
-      <div class="form-row">
-        <label>Email</label>
-        <input type="email" name="email" required value="{{ user.Email or '' }}">
-      </div>
-      <div class="form-row">
-        <label>Date of Birth</label>
-        <input type="text" value="{{ user.DateOfBirth.strftime('%Y-%m-%d') if user.DateOfBirth else 'Not set' }}" disabled>
-      </div>
-      <button type="submit">Update Account</button>
-    </form>
-    <div class="horizontal-divider"></div>
-    <form method="POST" action="{{ url_for('change_password') }}">
-      <div class="form-row">
-        <label>Current Password</label>
-        <input type="password" name="current_password" required>
-      </div>
-      <div class="form-row">
-        <label>New Password</label>
-        <input type="password" name="new_password" required>
-      </div>
-      <div class="form-row">
-        <label>Confirm Password</label>
-        <input type="password" name="confirm_password" required>
-      </div>
-      <button type="submit">Change Password</button>
-    </form>
-  </section>
-
-  <section class="settings-section">
-    <h2>Privacy</h2>
-    <p>Account activity is logged securely and used solely to operate Kitchen Management Suite.</p>
-  </section>
-
-  <section class="settings-section">
-    <h2>Request Data</h2>
-    <form method="POST" action="{{ url_for('export_data') }}">
-      <p>Download all your account, household, pantry, and recipe data.</p>
-      <button type="submit" class="secondary">Export My Data</button>
-    </form>
-  </section>
-
-  <section class="settings-section danger">
-    <h2>Kill My Suite</h2>
-    {% if user_households %}
-    <form method="POST" action="{{ url_for('leave_household') }}">
-      <p>Leave a household you belong to.</p>
-      <div class="form-row">
-        <select name="household_id" required>
-          <option value="">Choose household</option>
-          {% for household in user_households %}
-          <option value="{{ household.HouseholdID }}">{{ household.HouseholdName }} ({{ household.Role }})</option>
-          {% endfor %}
-        </select>
-      </div>
-      <button type="submit" class="danger-btn">Leave Household</button>
-    </form>
-    <div class="horizontal-divider"></div>
-    {% endif %}
-    <form method="POST" action="{{ url_for('delete_account') }}">
-      <p>Deleting your account removes everything.</p>
-      <div class="form-row">
-        <input type="text" name="confirm_delete" placeholder="Type DELETE" required>
-      </div>
-      <button type="submit" class="danger-btn">Delete Account</button>
-    </form>
-  </section>
-</div>
+{% block extra_js %}
+<script>
+    window.settingsData = {
+        userData: {{ user_data | tojson }},
+        profileData: {{ profile_data | tojson }},
+        households: {{ user_households | tojson }}
+    };
+</script>
+<script type="module">
+    import { initSettings } from "{{ url_for('static', filename='settings.js') }}";
+    initSettings('settings-root', window.settingsData);
+</script>
 {% endblock %}

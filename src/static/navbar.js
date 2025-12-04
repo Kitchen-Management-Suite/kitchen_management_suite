@@ -26,7 +26,8 @@ export function Navbar(props) {
 
   const switchHousehold = (e) => {
     const householdId = e.target.value;
-    window.location.href = `/switch_household/${householdId}`;
+    const currentPath = window.location.pathname;
+    window.location.href = `/switch_household/${householdId}?next=${encodeURIComponent(currentPath)}`;
   };
 
   const toggleDropdown = (e) => {
@@ -89,7 +90,7 @@ export function Navbar(props) {
               class: 'profile-dropdown',
               onclick: (e) => e.stopPropagation()
             },
-              h('a', { href: '/account' }, 'Account Settings'),
+              h('a', { href: '/settings' }, 'Account Settings'),
               h('a', { href: '/manage_user_profile'}, 'User Profile'),
               h('a', { href: '/logout', class: 'logout-btn'}, 'Logout')
             )
