@@ -6,6 +6,26 @@
 
 import { h, useState, useEffect } from './hook.js';
 
+/**
+ * Flatten nested arrays of children recursively
+ * Filters out null/undefined/false values
+ */
+function flattenChildren(children) {
+  if (children == null || children === false) return [];
+  if (!Array.isArray(children)) return [children];
+  
+  const result = [];
+  for (const child of children) {
+    if (child == null || child === false) continue;
+    if (Array.isArray(child)) {
+      result.push(...flattenChildren(child));
+    } else {
+      result.push(child);
+    }
+  }
+  return result;
+}
+
 /* Modal
  * handles escape key, backdrop clicks, and structured layout
  */
@@ -19,8 +39,9 @@ export function Modal(props) {
     footer = null
   } = props;
 
-  const childArray = children == null ? [] : (Array.isArray(children) ? children : [children]);
-  const footerArray = footer == null ? [] : (Array.isArray(footer) ? footer : [footer]);
+  // Flatten children to handle nested arrays from ternary operators
+  const childArray = flattenChildren(children);
+  const footerArray = flattenChildren(footer);
 
   useEffect(() => {
     if (!isOpen) return;

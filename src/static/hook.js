@@ -205,12 +205,16 @@ export function render(vnode, container) {
   
   // save focus state -> for modal forms
   const active = document.activeElement;
-  const focusInfo = active ? {
+  const focusInfo = active && container.contains(active) ? {
     id: active.id,
     name: active.name,
     tag: active.tagName,
+    type: active.type,
     start: active.selectionStart,
-    end: active.selectionEnd
+    end: active.selectionEnd,
+    // Also save class and placeholder as fallbacks for finding element
+    className: active.className,
+    placeholder: active.placeholder
   } : null;
   
   // save scroll positions -> for modal forms
@@ -236,20 +240,66 @@ export function render(vnode, container) {
     currentRoot = prevRoot;
   }
   
+  // Restore scroll positions
   container.querySelectorAll('.modal-body, .modal-content').forEach(el => {
     const saved = scrolls.get(el.className);
     if (saved) el.scrollTop = saved;
   });
   
-  if (focusInfo && (focusInfo.id || focusInfo.name)) {
-    const el = focusInfo.id ? document.getElementById(focusInfo.id) 
-             : document.querySelector(`[name="${focusInfo.name}"]`);
-    if (el && (focusInfo.tag === 'INPUT' || focusInfo.tag === 'TEXTAREA' || focusInfo.tag === 'SELECT')) {
-      el.focus({ preventScroll: true });
-      // Restore cursor for text inputs only
-      if (focusInfo.start != null && (el.type === 'text' || el.type === 'search' || el.type === 'tel' || el.type === 'url' || focusInfo.tag === 'TEXTAREA')) {
-        try { el.setSelectionRange(focusInfo.start, focusInfo.end); } catch(e) {}
-      }
+  // Restore focus - try multiple strategies
+  if (focusInfo && (focusInfo.tag === 'INPUT' || focusInfo.tag === 'TEXTAREA' || focusInfo.tag === 'SELECT')) {
+    restoreFocus(focusInfo, container);
+  }
+}
+
+/**
+ * Restore focus to an input element after re-render
+ * Tries multiple strategies to find the element
+ */
+function restoreFocus(focusInfo, container) {
+  let el = null;
+  
+  // Strategy 1: Find by ID
+  if (focusInfo.id) {
+    el = document.getElementById(focusInfo.id);
+  }
+  
+  // Strategy 2: Find by name attribute
+  if (!el && focusInfo.name) {
+    el = container.querySelector(`[name="${focusInfo.name}"]`);
+  }
+  
+  // Strategy 3: Find by placeholder within container (for inputs without id/name)
+  if (!el && focusInfo.placeholder) {
+    el = container.querySelector(`${focusInfo.tag.toLowerCase()}[placeholder="${focusInfo.placeholder}"]`);
+  }
+  
+  // Strategy 4: If the element is still focused (wasn't replaced), do nothing
+  if (!el && document.activeElement && 
+      document.activeElement.tagName === focusInfo.tag &&
+      container.contains(document.activeElement)) {
+    el = document.activeElement;
+  }
+  
+  if (el && el !== document.activeElement) {
+    el.focus({ preventScroll: true });
+  }
+  
+  // Restore cursor position for text inputs
+  if (el && focusInfo.start != null) {
+    const isTextInput = (
+      focusInfo.type === 'text' || 
+      focusInfo.type === 'search' || 
+      focusInfo.type === 'tel' || 
+      focusInfo.type === 'url' ||
+      focusInfo.type === 'email' ||
+      focusInfo.type === 'password' ||
+      focusInfo.tag === 'TEXTAREA'
+    );
+    if (isTextInput) {
+      try { 
+        el.setSelectionRange(focusInfo.start, focusInfo.end); 
+      } catch(e) { /* ignore for input types that don't support selection */ }
     }
   }
 }
