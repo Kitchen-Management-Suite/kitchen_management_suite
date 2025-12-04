@@ -16,14 +16,28 @@
       <progress class = "progress-bar-modify" value="{{percentOfDailyGoal}}" max="1" style="width: 100%;"> </progress>
     </div>
     <div class = "dayMetaDataRow">
-       <h3 class = "card-base carb-card"> Carbs: {{ dashBoardValues["Carbs"] | int }} </h3>
-       <h3 class = "card-base protein-card"> Protein: {{ dashBoardValues["Protein"] | int }} </h3>
-       <h3 class = "card-base fat-card">Fat: {{ dashBoardValues["Fat"] | int }} </h3>
+      <div> 
+        <h3 class = "card-base carb-card"> Carbs: {{ dashBoardValues["Carbs"] | int }} </h3>
+        <h3 class = "card-base protein-card"> Protein: {{ dashBoardValues["Protein"] | int }} </h3>
+        <h3 class = "card-base fat-card">Fat: {{ dashBoardValues["Fat"] | int }} </h3> 
+      </div>
+      <div id="dropdownMenu" class = "dropdown">
+        <!-- TO DO NEXT, change the window. variable to meal type, set meal type as function of button -->
+        <!-- Set actino of form to go to the new link WITH the mealType -->
+        <button class="typeMealSelc">Breakfast</button>
+        <button class="typeMealSelc">AM-Snack</button>
+        <button id = "defMealType" class="typeMealSelc" >Lunch</button>
+        <button class="typeMealSelc">PM-Snack</button>
+        <button class="typeMealSelc">Dinner</button>
+      </div>
     </div>
   </div>
 
-  <form action = "{{mealItemSearchUrl}}" style="margin-bottom: 1rem;">
-      <button type = "submit" class="addMealBtn" MealType ="Breakfast"> Add Meal</button>
+
+  <!-- <button type = "submit" class="addMealBtn" MealType ="Breakfast"> Add Meal</button> -->
+  <form id = "addFoodToLog" action = "/meal_item_search" style="margin-bottom: 1rem;" method = "POST">
+    <input type="hidden" name="MealType" value="Lunch">
+    <button type = "submit" class="addMealBtn" MealType ="Breakfast"> Add Meal</button>
   </form>
   
     {% if groupedByMealType | length == 0%}
@@ -34,7 +48,7 @@
       <div class = "itemDisplayContainer">
         {% for mealType in orderOfMealType%}
         <div> 
-          <h2> {{mealType}}</h2>
+          <h2 class = "meal-type-name-display"> {{mealType}}</h2>
           {% for value2 in groupedByMealType[mealType] %}
             <h3> {{value2}} </h3>
           {% endfor %}
@@ -42,18 +56,15 @@
       {% endfor %}
       </div>
     {% endif%}
-    
-      
 
-  <div id="dropdownMenu" class="dropdown">
-    <a class="typeMealSelc" href="#">Choose From Recipe</a>
-    <a class="typeMealSelc" href="#">Make New Recipe</a>
-    <a class="typeMealSelc"  href="{{mealItemSearchUrl}}"> Other</a>
-  </div>
+<!-- mealItemSearchLink + `?MealType=${encodeURIComponent(button.getAttribute("MealType"))}`  </div> -->
 <!-- The href's here will dynamically change as the user selects a differnet button to pass the mealType-->
 
 {% endblock %}
 {% block extra_js %}
-  <script> window.mealItemSearchLink = "{{mealItemSearchUrl}}"</script> 
+  <script> 
+    window.mealTypeQuery = '?MealType=Lunch'
+    window.mealItemSearchLink = "{{mealItemSearchUrl}}"
+  </script> 
   <script defer src="{{ url_for('static', filename='calorieTrack.js') }}">  </script>
 {% endblock %}

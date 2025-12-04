@@ -60,6 +60,10 @@ if USDAApiKey == None:
 
 def searchByStr(searchText, **kwargs):#Will Need to sanitize search later#SUCH AS CHECK FOR EMPTY STRINGS, 
     #Emptry strings from openfoodfacts prevent writing to database
+    """
+    Searches by String in the open food facts data 
+    Check root/docs/api for more information
+    """
     url = "https://world.openfoodfacts.org/cgi/search.pl"
     defaultFields = ["generic_name_en", #Not implemented
                      "image_front_small_url",
@@ -97,6 +101,10 @@ def searchByCode(code, **kwargs):#Deprecated, need to change
         return -1
 
 def searchRawIngredient(name, **kwargs):
+    """
+    Searches by via String in the USAFood API 
+    Check root/docs/api for more information
+    """
     try: 
         url =  "https://api.nal.usda.gov/fdc/v1/foods/search"
         params = {
@@ -116,10 +124,7 @@ def searchRawIngredient(name, **kwargs):
     
 #To do 
 # Write api throttler
-# Write conditionals for loading calorite track page
-#Finish styling very basic search page
-# # Write the ability to pull in anything else necessary (recipies etc)
-# IF POSSIBLE allow a view of multiple days
-#Running Bugs: 
-#Reloading the page after adding an item will add it twice
-#its with empty strings cannot be added to the database
+#Implement Loading screen for api Calls
+#Find a way to speed up API Calls
+#Implement Search by Code 
+#

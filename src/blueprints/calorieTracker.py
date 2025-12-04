@@ -37,7 +37,10 @@ def meal_item_search():
     if not session.get('logged_in'):
         flash('Please log in to track calories.', 'error')
         return redirect(url_for('auth.login'))
-    MealType = request.args.get("MealType")
+    MealType = request.form.get("MealType")
+    print(request.form)
+    print(request)
+    print("MEAL TYPE", MealType)
     return render_template("meal_item_search.html", MealType = MealType)
 
 #This endpoint is used to make the API call and redirct the user to the same html page with the searched content
@@ -163,7 +166,5 @@ def calorieTracking():#KNOWN BUG - reloading this page after adding an item will
                            calorieGoal = userProfileData.CalorieGoal)
 
 ##TO DO 
-#Update Monkey Type (Cause I need meal types w names to exist)
-#Clear all current data and rerun, cause I need that data
 #Create front end rendering for items on display 
 #MAKE IT LOOK GOOD

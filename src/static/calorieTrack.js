@@ -1,17 +1,20 @@
 document.addEventListener("DOMContentLoaded", () => {
     console.log("DOM Content Loaded running init script");
 
-    const addMealButtons = document.querySelectorAll(".addMealBtn")
-    const dropdown = document.getElementById("dropdownMenu")
-    let curtClicked = null
 
-    if (addMealButtons == null)
+    const addMealButtons = document.querySelectorAll(".typeMealSelc")
+    const defaultMealType = document.getElementById("defMealType")
+    const addFoodToLog = document.getElementById("addFoodToLog")
+
+    let curtClicked = defaultMealType
+    //Default is hardcoded in calorieTracking html
+    
+    if (addMealButtons == null || defMealType == null || addFoodToLog == null)
         console.log("!ERROR! could not find meal elements")
         //Handle Later
 
-    if (dropdown == null)
-        console.log("!ERROR! could not find dropdown element")
-        //Handle Later
+    // console.log(defaultMealType)
+    defaultMealType.style.background = "#bbdefb";
 
     //There is admittidley a little inefficency here,
     //Becuase there is always two click checks when clicking a buttong
@@ -20,28 +23,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     addMealButtons.forEach(button => {
          button.addEventListener("click", (event) => {
-            dropdown.style.display = dropdown.style.display === "absolute" ? "none": "absolute";
-
-            dropdown.style.left =  event.screenX + "px";
-            dropdown.style.top = event.screenY + "px";
-
-            // button.setAttribute("MealType", typeArray[i] )
-            // console.log(button.getAttribute("MealType"));
-            // console.log(window.mealItemSearchLink)
-            dropdown.children[2].setAttribute("href", window.mealItemSearchLink + `?MealType=${encodeURIComponent(button.getAttribute("MealType"))}`)//Accesses the itemSearch selection of items
+            // console.log("TEST");
+            // console.log(event.target);
+            if (curtClicked != null){
+                curtClicked.style.background = "unset";
+            }
+            button.style.background = "#bbdefb";
+            mealType = button.innerHTML;
             curtClicked = button;
-            // dropdown.children[2].setAttribute("href", "{{url_for('meal_item_search')}}" + )//Accesses the itemSearch selection of items
-
+            console.log(document.getElementsByName("MealType"))
+            document.getElementsByName("MealType")[0].value = mealType//Should probably santize this later
         })
     });
-
-    document.addEventListener("click", (event) =>{
-        if  (curtClicked == null) return;
-        if (!(curtClicked.contains(event.target)) && !(dropdown.contains(event.target))){
-            dropdown.style.display = "none";
-            curtClicked = null;
-            // console.log(dropdown.style.display);
-        }
-    })
 })
 
