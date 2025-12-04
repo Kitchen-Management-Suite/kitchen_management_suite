@@ -2,38 +2,265 @@
 
 {% block title %}KMS | Home{% endblock %}
 
-{% block content %}
-<div id="greeting-root"></div>
-<div id="quick-actions-root"></div>
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
 {% endblock %}
 
-{% block extra_js %}
-<script type="module">
-    import { h, render } from "{{ url_for('static', filename='hook.js') }}";
+{% block content %}
+<div class="home-container">
+    {% if metrics and metrics.current_household %}
+    <!-- Main Dashboard for Active Household -->
+    <div class="dashboard-header">
+        <div>
+            <h1>Welcome back, {{ session.username }}!</h1>
+            <p class="household-name">{{ metrics.current_household.HouseholdName }}</p>
+        </div>
+        <div class="quick-stats">
+            <div class="quick-stat">
+                <span class="stat-value">{{ metrics.pantry_items_count }}</span>
+                <span class="stat-label">Items</span>
+            </div>
+            <div class="quick-stat">
+                <span class="stat-value">{{ metrics.household_recipes_count }}</span>
+                <span class="stat-label">Recipes</span>
+            </div>
+            <div class="quick-stat">
+                <span class="stat-value">{{ metrics.household_members_count }}</span>
+                <span class="stat-label">Members</span>
+            </div>
+        </div>
+    </div>
 
-    function QuickActions() {
-        const actions = [
-            { title: "Pantry", link: "/pantry" },
-            { title: "Recipes", link: "/recipes" },
-            { title: "Account", link: "/account" }
-        ];
+    <div class="dashboard-grid">
+        <!-- Suggested Recipes You Can Make -->
+        <div class="dashboard-card featured-card suggested-recipes">
+            <h3>🍳 Ready to Cook</h3>
+            {% if metrics.suggested_recipes %}
+            <div class="recipe-suggestions">
+                {% for suggestion in metrics.suggested_recipes %}
+                <a href="{{ url_for('recipes.recipe_detail', recipe_id=suggestion.recipe.RecipeID) }}" class="suggestion-card">
+                    <div class="suggestion-header">
+                        <h4>{{ suggestion.recipe.RecipeName }}</h4>
+                        <div class="match-badge" style="background: {% if suggestion.score >= 75 %}#4caf50{% elif suggestion.score >= 50 %}#ff9800{% else %}#f44336{% endif %};">
+                            {{ suggestion.score }}%
+                        </div>
+                    </div>
+                    <p class="suggestion-meta">
+                        You have {{ suggestion.matched }}/{{ suggestion.total }} ingredients
+                        {% if suggestion.recipe.RecipeBody and suggestion.recipe.RecipeBody.preptime %}
+                        • {{ suggestion.recipe.RecipeBody.preptime }}min prep
+                        {% endif %}
+                    </p>
+                    <div class="match-bar-small">
+                        <div class="match-fill" style="width: {{ suggestion.score }}%; background: {% if suggestion.score >= 75 %}#4caf50{% elif suggestion.score >= 50 %}#ff9800{% else %}#f44336{% endif %};"></div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            <a href="{{ url_for('recipes.recipes') }}" class="card-footer-link">Browse all recipes →</a>
+            {% else %}
+            <div class="empty-state">
+                <p>Add recipes to your household to see cooking suggestions!</p>
+                <a href="{{ url_for('recipes.recipes') }}" class="btn-secondary">Explore Recipes</a>
+            </div>
+            {% endif %}
+        </div>
 
-        return h("div", null,
-            h("h3", null, "Quick Actions"),
-            h("div", { class: "quick-actions" },
-                ...actions.map(action => 
-                    h("a", { href: action.link, class: "action-card" },
-                        h("div", { class: "action-title" }, action.title)
-                    )
-                )
-            )
-        );
-    }
+        <!-- Shopping List -->
+        <div class="dashboard-card shopping-list">
+            <h3>🛒 Shopping List</h3>
+            {% if metrics.shopping_list %}
+            <p class="card-subtitle">Missing ingredients for: <strong>{{ metrics.shopping_list[0].recipe }}</strong></p>
+            <ul class="shopping-items">
+                {% for item in metrics.shopping_list %}
+                <li class="shopping-item">
+                    <span class="item-checkbox">☐</span>
+                    <div class="item-info">
+                        <span class="item-name">{{ item.name }}</span>
+                        {% if item.amount %}
+                        <span class="item-qty">{{ item.amount }} {{ item.unit }}</span>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            <a href="{{ url_for('pantry.pantry') }}" class="card-footer-link">Add to pantry →</a>
+            {% else %}
+            <div class="empty-state">
+                <p>You have everything you need! 🎉</p>
+            </div>
+            {% endif %}
+        </div>
 
-    // Render greeting
-    document.getElementById("greeting-root").innerHTML = '<h2>Welcome, {{ session.username }}!</h2>';
-    
-    // Render quick actions
-    render(h(QuickActions), document.getElementById("quick-actions-root"));
-</script>
+        <!-- Recent Household Activity -->
+        <div class="dashboard-card recent-activity">
+            <h3>📋 Recent Activity</h3>
+            {% if metrics.recent_activity %}
+            <ul class="activity-feed">
+                {% for activity in metrics.recent_activity %}
+                <li class="activity-item">
+                    <div class="activity-avatar">{{ activity.user[0]|upper }}</div>
+                    <div class="activity-content">
+                        <p class="activity-text">
+                            <strong>{{ activity.user }}</strong> added
+                            <span class="activity-highlight">{{ activity.item }}</span>
+                        </p>
+                        <span class="activity-meta">
+                            {{ activity.quantity }} {{ activity.unit }}
+                            {% if activity.days_ago == 0 %}
+                            • Today
+                            {% elif activity.days_ago == 1 %}
+                            • Yesterday
+                            {% else %}
+                            • {{ activity.days_ago }} days ago
+                            {% endif %}
+                        </span>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="empty-state">
+                <p>No recent activity in the last 2 weeks.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Items to Check -->
+        <div class="dashboard-card expiring-items">
+            <h3>⏰ Items to Check</h3>
+            {% if metrics.expiring_soon %}
+            <p class="card-subtitle">These items have been in your pantry for a while</p>
+            <ul class="expiring-list">
+                {% for item in metrics.expiring_soon %}
+                <li class="expiring-item">
+                    <div class="expiring-icon">⚠️</div>
+                    <div class="expiring-info">
+                        <span class="expiring-name">{{ item.name }}</span>
+                        <span class="expiring-meta">{{ item.quantity|round(1) }} {{ item.unit }} • {{ item.days_old }} days old</span>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            <p class="help-text">Consider using these items soon or checking their condition</p>
+            {% else %}
+            <div class="empty-state">
+                <p>All items are fresh! ✨</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Top Contributors -->
+        {% if metrics.top_contributors %}
+        <div class="dashboard-card contributors">
+            <h3>🏆 Top Contributors</h3>
+            <p class="card-subtitle">Most pantry additions in the last 30 days</p>
+            <ul class="contributor-list">
+                {% for contrib in metrics.top_contributors %}
+                <li class="contributor-item">
+                    <div class="contributor-rank">{{ loop.index }}</div>
+                    <div class="contributor-info">
+                        <span class="contributor-name">{{ contrib.username }}</span>
+                        <span class="contributor-count">{{ contrib.count }} {{ 'item' if contrib.count == 1 else 'items' }}</span>
+                    </div>
+                    {% if loop.index == 1 %}
+                    <span class="medal">🥇</span>
+                    {% elif loop.index == 2 %}
+                    <span class="medal">🥈</span>
+                    {% elif loop.index == 3 %}
+                    <span class="medal">🥉</span>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- Quick Actions -->
+        <div class="dashboard-card quick-actions">
+            <h3>⚡ Quick Actions</h3>
+            <div class="action-buttons">
+                <a href="{{ url_for('pantry.pantry') }}" class="action-btn primary">
+                    <span class="btn-icon">🥫</span>
+                    <span>Add to Pantry</span>
+                </a>
+                <a href="{{ url_for('recipes.recipes') }}" class="action-btn secondary">
+                    <span class="btn-icon">📖</span>
+                    <span>Find Recipes</span>
+                </a>
+                <a href="{{ url_for('calorie_tracker.calorie_tracker') }}" class="action-btn secondary">
+                    <span class="btn-icon">🍽️</span>
+                    <span>Log Meal</span>
+                </a>
+                <a href="{{ url_for('manage_household') }}" class="action-btn secondary">
+                    <span class="btn-icon">👥</span>
+                    <span>Household</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- No Household Selected - Getting Started View -->
+    <div class="getting-started">
+        <div class="welcome-card">
+            <h1>Welcome to Kitchen Management Suite, {{ session.username }}! 👋</h1>
+            <p class="welcome-message">Get started by creating or joining a household to unlock all features.</p>
+
+            <div class="onboarding-steps">
+                <div class="onboarding-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Create or Join a Household</h4>
+                        <p>Start by creating a new household or joining an existing one with your family or roommates.</p>
+                        <a href="{{ url_for('manage_household') }}" class="btn-primary">Get Started</a>
+                    </div>
+                </div>
+
+                <div class="onboarding-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Stock Your Pantry</h4>
+                        <p>Add items to your household pantry to keep track of what you have on hand.</p>
+                    </div>
+                </div>
+
+                <div class="onboarding-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Discover Recipes</h4>
+                        <p>Get personalized recipe suggestions based on your pantry items.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🥫</div>
+                <h3>Smart Pantry</h3>
+                <p>Track items with quantities and units. Get alerts for low stock and old items.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📖</div>
+                <h3>Recipe Matching</h3>
+                <p>See what you can cook with your current pantry items. Get shopping lists automatically.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🍽️</div>
+                <h3>Nutrition Tracking</h3>
+                <p>Log your meals and track your daily nutrition goals with ease.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3>Household Collaboration</h3>
+                <p>Share pantries and recipes with household members. See who's contributing.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
 {% endblock %}

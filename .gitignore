@@ -43,3 +43,6 @@ venv.bak/
 .vscode/
 .app.pid
 .app.log
+
+.claude
+migrations

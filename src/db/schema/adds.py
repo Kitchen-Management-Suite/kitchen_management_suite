@@ -17,7 +17,7 @@ Outputs:
     The mapped `Adds` class usable with SQLAlchemy sessions and __repr__ for debug
 """
 
-from sqlalchemy import Column, Integer, Date, ForeignKey
+from sqlalchemy import Column, Integer, Date, String, Float, ForeignKey
 from sqlalchemy.orm import relationship
 from db.server import Base
 
@@ -29,7 +29,8 @@ class Adds(Base):
     UserID = Column(Integer, ForeignKey("Users.UserID"), nullable=False)
     PantryID = Column(Integer, ForeignKey("Pantries.PantryID"), nullable=False)
     ItemID = Column(Integer, ForeignKey("Items.ItemID"), nullable=False)
-    Quantity = Column(Integer)
+    Quantity = Column(Float)  # Changed from Integer to Float for fractional amounts
+    Unit = Column(String(50))  # e.g., 'pieces', 'lbs', 'cups', 'sticks', etc.
     ItemInDate = Column(Date)
 
     # relationships

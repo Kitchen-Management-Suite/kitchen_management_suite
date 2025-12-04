@@ -74,7 +74,44 @@
     <div class="ingredients-section">
         <h3>Ingredients</h3>
         
-        {% if pantry_items %}
+        {% if ingredient_availability %}
+        {% set available_count = namespace(value=0) %}
+        {% set partial_count = namespace(value=0) %}
+        {% set unavailable_count = namespace(value=0) %}
+        {% set total_count = namespace(value=0) %}
+
+        {% for ing_name, avail in ingredient_availability.items() %}
+            {% set total_count.value = total_count.value + 1 %}
+            {% if avail.status == 'full' %}
+                {% set available_count.value = available_count.value + 1 %}
+            {% elif avail.status == 'partial' %}
+                {% set partial_count.value = partial_count.value + 1 %}
+            {% else %}
+                {% set unavailable_count.value = unavailable_count.value + 1 %}
+            {% endif %}
+        {% endfor %}
+
+        <div class="pantry-info">
+            <h4>Pantry Availability</h4>
+            <div class="pantry-stats">
+                <div class="stat-item">
+                    <span class="stat-icon icon-available">✓</span>
+                    <span>{{ available_count.value }} available</span>
+                </div>
+                {% if partial_count.value > 0 %}
+                <div class="stat-item">
+                    <span class="stat-icon icon-partial">~</span>
+                    <span>{{ partial_count.value }} partial</span>
+                </div>
+                {% endif %}
+                <div class="stat-item">
+                    <span class="stat-icon icon-unavailable">✗</span>
+                    <span>{{ unavailable_count.value }} needed</span>
+                </div>
+            </div>
+        </div>
+        {% elif pantry_items %}
+        {# Fallback to old counting logic #}
         {% set available_count = namespace(value=0) %}
         {% set total_count = namespace(value=0) %}
         {% if recipe.RecipeBody and recipe.RecipeBody.ingredients %}
@@ -87,7 +124,7 @@
                 {% endif %}
             {% endfor %}
         {% endif %}
-        
+
         <div class="pantry-info">
             <h4>Pantry Availability</h4>
             <div class="pantry-stats">
@@ -114,7 +151,23 @@
                     {% if ingredient_data.amount %}{{ ingredient_data.amount }}{% endif %}
                     {% if ingredient_data.unit %}{{ ingredient_data.unit }}{% endif %}
                 </span>
-                {% if pantry_items %}
+                {% if ingredient_availability and ingredient_name.lower() in ingredient_availability %}
+                    {% set avail = ingredient_availability[ingredient_name.lower()] %}
+                    {% if avail.status == 'full' %}
+                    <span class="ingredient-status status-available">
+                        ✓ ({{ avail.available }})
+                    </span>
+                    {% elif avail.status == 'partial' %}
+                    <span class="ingredient-status status-partial">
+                        ~ ({{ avail.available }}/{{ avail.required }})
+                    </span>
+                    {% else %}
+                    <span class="ingredient-status status-unavailable">
+                        ✗
+                    </span>
+                    {% endif %}
+                {% elif pantry_items %}
+                    {# Fallback to old logic if ingredient_availability not available #}
                     {% if ingredient_name.lower() in pantry_items %}
                     <span class="ingredient-status status-available">
                         ✓ ({{ pantry_items[ingredient_name.lower()] }})
@@ -149,8 +202,8 @@
 </div>
 
 <!-- Nutrition Facts Label -->
-{% if recipe.RecipeBody and recipe.RecipeBody.nutriments_per_serving %}
 <div class="nutrition-facts-container">
+    {% if recipe.RecipeBody and recipe.RecipeBody.nutriments_per_serving %}
     <div class="nutrition-label">
         <h3 class="nutrition-title">Nutrition Facts</h3>
         <div class="serving-size">
@@ -159,47 +212,102 @@
             <br>Servings Per Recipe: {{ recipe.RecipeBody.serves }}
             {% endif %}
         </div>
-        
+
         <div class="calories-section">
             <div class="calories-row">
                 <span class="calories-label">Calories</span>
                 <span class="calories-value">{{ recipe.RecipeBody.nutriments_per_serving['energy-kcal']|round|int }}</span>
             </div>
         </div>
-        
+
         <div class="daily-value-header">
             % Daily Value*
         </div>
-        
+
         <div class="nutrient-row major">
             <div class="nutrient-name"><strong>Total Fat</strong> {{ recipe.RecipeBody.nutriments_per_serving.fat|round(1) }}g</div>
             <div class="nutrient-dv"><strong>{{ ((recipe.RecipeBody.nutriments_per_serving.fat / 78) * 100)|round|int }}%</strong></div>
         </div>
-        
+
         <div class="nutrient-row">
             <div class="nutrient-name"><strong>Total Carbohydrate</strong> {{ recipe.RecipeBody.nutriments_per_serving.carbohydrates|round(1) }}g</div>
             <div class="nutrient-dv"><strong>{{ ((recipe.RecipeBody.nutriments_per_serving.carbohydrates / 275) * 100)|round|int }}%</strong></div>
         </div>
-        
+
         <div class="nutrient-row indent">
             <div class="nutrient-name">Dietary Fiber {{ recipe.RecipeBody.nutriments_per_serving.fiber|round(1) }}g</div>
             <div class="nutrient-dv">{{ ((recipe.RecipeBody.nutriments_per_serving.fiber / 28) * 100)|round|int }}%</div>
         </div>
-        
+
         <div class="nutrient-row indent">
             <div class="nutrient-name">Total Sugars {{ recipe.RecipeBody.nutriments_per_serving.sugars|round(1) }}g</div>
             <div class="nutrient-dv"></div>
         </div>
-        
+
         <div class="nutrient-row major">
             <div class="nutrient-name"><strong>Protein</strong> {{ recipe.RecipeBody.nutriments_per_serving.proteins|round(1) }}g</div>
             <div class="nutrient-dv"><strong>{{ ((recipe.RecipeBody.nutriments_per_serving.proteins / 50) * 100)|round|int }}%</strong></div>
         </div>
-        
+
         <div class="nutrition-footnote">
             * Percent Daily Values are based on a 2,000 calorie diet.
         </div>
     </div>
+    {% else %}
+    <!-- No nutrition data available -->
+    <div class="nutrition-placeholder" style="text-align: center; padding: 2rem; background: #f5f5f5; border-radius: 8px; margin: 2rem 0;">
+        <h3 style="margin-bottom: 1rem;">Nutrition Information Not Available</h3>
+        <p style="color: #666; margin-bottom: 1.5rem;">Calculate nutrition facts automatically based on the recipe ingredients using OpenFoodFacts and USDA databases.</p>
+        <button id="calculate-nutrition-btn" class="btn-primary" style="padding: 0.75rem 1.5rem; font-size: 1rem;">
+            Calculate Nutrition
+        </button>
+        <div id="nutrition-message" style="margin-top: 1rem; display: none;"></div>
+    </div>
+    {% endif %}
 </div>
+
+<script>
+{% if not (recipe.RecipeBody and recipe.RecipeBody.nutriments_per_serving) %}
+document.getElementById('calculate-nutrition-btn').addEventListener('click', async function() {
+    const btn = this;
+    const messageDiv = document.getElementById('nutrition-message');
+
+    btn.disabled = true;
+    btn.textContent = 'Calculating...';
+    messageDiv.style.display = 'none';
+
+    try {
+        const response = await fetch('/recipes/calculate_nutrition/{{ recipe.RecipeID }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            messageDiv.textContent = 'Nutrition calculated successfully! Refreshing page...';
+            messageDiv.style.color = 'green';
+            messageDiv.style.display = 'block';
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            messageDiv.textContent = 'Error: ' + (data.error || 'Failed to calculate nutrition');
+            messageDiv.style.color = 'red';
+            messageDiv.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Calculate Nutrition';
+        }
+    } catch (error) {
+        messageDiv.textContent = 'Error: ' + error.message;
+        messageDiv.style.color = 'red';
+        messageDiv.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Calculate Nutrition';
+    }
+});
 {% endif %}
+</script>
 {% endblock %}

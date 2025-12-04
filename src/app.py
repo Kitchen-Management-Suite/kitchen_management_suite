@@ -76,9 +76,226 @@ def inject_navbar():
 
 @app.route("/")
 def index():
-    """handle index route"""    
+    """handle index route"""
     if flaskSession.get('logged_in'):
-        return render_template("index.html")
+        user_id = session.get('user_id')
+        current_household_id = session.get('current_household_id')
+        db_session = get_session()
+
+        try:
+            from db.schema.household import Household
+            from db.schema.member import Member
+            from db.schema.pantry import Pantry
+            from db.schema.adds import Adds
+            from db.schema.item import Item
+            from db.schema.holds import Holds
+            from db.schema.authors import Authors
+            from db.schema.recipe import Recipe
+            from sqlalchemy import func, distinct, and_
+            from datetime import datetime, timedelta
+            from collections import defaultdict
+
+            # Initialize metrics
+            metrics = {
+                'total_households': 0,
+                'current_household': None,
+                'pantry_items_count': 0,
+                'household_recipes_count': 0,
+                'user_recipes_count': 0,
+                'recent_activity': [],
+                'household_members_count': 0,
+                'suggested_recipes': [],
+                'expiring_soon': [],
+                'shopping_list': [],
+                'top_contributors': []
+            }
+
+            # Get total households user is part of
+            user_households = db_session.query(Member).filter(
+                Member.UserID == user_id
+            ).all()
+            metrics['total_households'] = len(user_households)
+
+            # If no current household is set but user has households, set the first one
+            if not current_household_id and user_households:
+                current_household_id = user_households[0].HouseholdID
+                session['current_household_id'] = current_household_id
+
+            if current_household_id:
+                # Get current household details
+                current_household = db_session.query(Household).get(current_household_id)
+                metrics['current_household'] = current_household
+
+                # Get household member count
+                members_count = db_session.query(func.count(Member.MemberID)).filter(
+                    Member.HouseholdID == current_household_id
+                ).scalar()
+                metrics['household_members_count'] = members_count or 0
+
+                # Get pantry statistics
+                pantry = db_session.query(Pantry).filter(
+                    Pantry.HouseholdID == current_household_id
+                ).first()
+
+                if pantry:
+                    # Count unique items in pantry
+                    unique_items = db_session.query(func.count(distinct(Adds.ItemID))).filter(
+                        Adds.PantryID == pantry.PantryID
+                    ).scalar()
+                    metrics['pantry_items_count'] = unique_items or 0
+
+                    # Get recent activity (additions from all members in last 14 days)
+                    from db.schema.user import User
+                    fourteen_days_ago = datetime.now().date() - timedelta(days=14)
+                    recent_activity = db_session.query(
+                        User.Username,
+                        Item.ItemName,
+                        Adds.Quantity,
+                        Adds.Unit,
+                        Adds.ItemInDate
+                    ).join(Item).join(User).filter(
+                        Adds.PantryID == pantry.PantryID,
+                        Adds.ItemInDate >= fourteen_days_ago
+                    ).order_by(Adds.ItemInDate.desc()).limit(10).all()
+
+                    metrics['recent_activity'] = [
+                        {
+                            'user': activity.Username,
+                            'item': activity.ItemName,
+                            'quantity': activity.Quantity,
+                            'unit': activity.Unit or 'pieces',
+                            'date': activity.ItemInDate,
+                            'days_ago': (datetime.now().date() - activity.ItemInDate).days
+                        } for activity in recent_activity
+                    ]
+
+                    # Get items added more than 60 days ago (potentially expiring)
+                    sixty_days_ago = datetime.now().date() - timedelta(days=60)
+                    old_items = db_session.query(
+                        Item.ItemName,
+                        func.min(Adds.ItemInDate).label('oldest_date'),
+                        func.sum(Adds.Quantity).label('total_qty'),
+                        Adds.Unit
+                    ).join(Adds).filter(
+                        Adds.PantryID == pantry.PantryID,
+                        Adds.ItemInDate < sixty_days_ago
+                    ).group_by(Item.ItemName, Adds.Unit).limit(8).all()
+
+                    metrics['expiring_soon'] = [
+                        {
+                            'name': item.ItemName,
+                            'quantity': item.total_qty,
+                            'unit': item.Unit or 'pieces',
+                            'days_old': (datetime.now().date() - item.oldest_date).days
+                        } for item in old_items
+                    ]
+
+                    # Build pantry items dict for recipe matching
+                    pantry_items_raw = db_session.query(
+                        Item.ItemName,
+                        Adds.Quantity,
+                        Adds.Unit
+                    ).join(Adds).filter(
+                        Adds.PantryID == pantry.PantryID
+                    ).all()
+
+                    pantry_items_dict = defaultdict(list)
+                    for item_name, qty, unit in pantry_items_raw:
+                        pantry_items_dict[item_name.lower()].append((qty, unit or 'pieces'))
+
+                    # Get top 3 recipes from household that match pantry
+                    household_recipe_ids = db_session.query(Holds.RecipeID).filter(
+                        Holds.HouseholdID == current_household_id
+                    ).all()
+                    household_recipe_ids = [r[0] for r in household_recipe_ids]
+
+                    if household_recipe_ids:
+                        household_recipes = db_session.query(Recipe).filter(
+                            Recipe.RecipeID.in_(household_recipe_ids)
+                        ).limit(10).all()
+
+                        # Score recipes based on pantry match
+                        scored_recipes = []
+                        for recipe in household_recipes:
+                            if recipe.RecipeBody and 'ingredients' in recipe.RecipeBody:
+                                ingredients = recipe.RecipeBody['ingredients']
+                                total_ingredients = len(ingredients)
+                                matched = 0
+
+                                for ing_key, ing_data in ingredients.items():
+                                    if isinstance(ing_data, dict):
+                                        ing_name = ing_data.get('id', ing_key).replace('-', ' ').lower()
+                                        if ing_name in pantry_items_dict:
+                                            matched += 1
+
+                                if total_ingredients > 0:
+                                    match_score = int((matched / total_ingredients) * 100)
+                                    scored_recipes.append({
+                                        'recipe': recipe,
+                                        'score': match_score,
+                                        'matched': matched,
+                                        'total': total_ingredients
+                                    })
+
+                        # Sort by score and take top 3
+                        scored_recipes.sort(key=lambda x: x['score'], reverse=True)
+                        metrics['suggested_recipes'] = scored_recipes[:3]
+
+                        # Generate shopping list from top recipe (if match < 100%)
+                        if scored_recipes and scored_recipes[0]['score'] < 100:
+                            top_recipe = scored_recipes[0]['recipe']
+                            missing_items = []
+
+                            if top_recipe.RecipeBody and 'ingredients' in top_recipe.RecipeBody:
+                                for ing_key, ing_data in top_recipe.RecipeBody['ingredients'].items():
+                                    if isinstance(ing_data, dict):
+                                        ing_name = ing_data.get('id', ing_key).replace('-', ' ')
+                                        if ing_name.lower() not in pantry_items_dict:
+                                            missing_items.append({
+                                                'name': ing_name.title(),
+                                                'amount': ing_data.get('amount', ''),
+                                                'unit': ing_data.get('unit', ''),
+                                                'recipe': top_recipe.RecipeName
+                                            })
+
+                            metrics['shopping_list'] = missing_items[:6]
+
+                    # Get top contributors (users who added most items in last 30 days)
+                    thirty_days_ago = datetime.now().date() - timedelta(days=30)
+                    top_contributors = db_session.query(
+                        User.Username,
+                        func.count(Adds.AddsID).label('additions_count')
+                    ).join(User).filter(
+                        Adds.PantryID == pantry.PantryID,
+                        Adds.ItemInDate >= thirty_days_ago
+                    ).group_by(User.Username).order_by(func.count(Adds.AddsID).desc()).limit(5).all()
+
+                    metrics['top_contributors'] = [
+                        {
+                            'username': contrib.Username,
+                            'count': contrib.additions_count
+                        } for contrib in top_contributors
+                    ]
+
+                # Get household recipe count
+                household_recipe_count = db_session.query(func.count(Holds.RecipeID)).filter(
+                    Holds.HouseholdID == current_household_id
+                ).scalar()
+                metrics['household_recipes_count'] = household_recipe_count or 0
+
+            # Get user's total authored recipes
+            user_recipe_count = db_session.query(func.count(distinct(Authors.RecipeID))).filter(
+                Authors.UserID == user_id
+            ).scalar()
+            metrics['user_recipes_count'] = user_recipe_count or 0
+
+            return render_template("index.html", metrics=metrics)
+
+        except Exception as e:
+            print(f"Error loading home metrics: {e}")
+            return render_template("index.html", metrics=None)
+        finally:
+            db_session.close()
     else:
         return render_template("public.html")
 

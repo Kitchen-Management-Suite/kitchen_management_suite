@@ -51,9 +51,26 @@ function PantryList({ items }) {
   return h(
     "ul",
     { class: "pantry-list" },
-    ...items.map((item) =>
-      h("li", null, h("strong", null, item.ItemName), " — ", item.Quantity),
-    ),
+    ...items.map((item) => {
+      // Handle new format with Quantities array [{amount, unit}, ...]
+      let quantityDisplay = "";
+      if (item.Quantities && Array.isArray(item.Quantities)) {
+        quantityDisplay = item.Quantities.map(
+          (q) => `${q.amount} ${q.unit}`
+        ).join(", ");
+      } else if (item.Quantity !== undefined) {
+        // Fallback to old format
+        quantityDisplay = item.Quantity;
+      }
+
+      return h(
+        "li",
+        null,
+        h("strong", null, item.ItemName),
+        " — ",
+        quantityDisplay
+      );
+    }),
   );
 }
 
