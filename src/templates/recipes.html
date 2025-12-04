@@ -64,25 +64,35 @@
     {% if household_recipes %}
     <div class="carousel" id="household-recipes-carousel">
         {% for recipe in household_recipes %}
-        <a href="{{ url_for('recipes.recipe_detail', recipe_id=recipe.RecipeID) }}" class="recipe-card">
-            <h4>{{ recipe.RecipeName }}</h4>
-            <div class="recipe-meta">
-                {% if recipe.RecipeBody and recipe.RecipeBody.serves %}
-                Serves: {{ recipe.RecipeBody.serves }}
+        <div class="recipe-card-wrapper">
+            <a href="{{ url_for('recipes.recipe_detail', recipe_id=recipe.RecipeID) }}" class="recipe-card">
+                <h4>{{ recipe.RecipeName }}</h4>
+                <div class="recipe-meta">
+                    {% if recipe.RecipeBody and recipe.RecipeBody.serves %}
+                    Serves: {{ recipe.RecipeBody.serves }}
+                    {% endif %}
+                </div>
+                <div class="recipe-meta">
+                    {% if recipe.RecipeBody and recipe.RecipeBody.preptime %}
+                    Prep: {{ recipe.RecipeBody.preptime }} min
+                    {% endif %}
+                    {% if recipe.RecipeBody and recipe.RecipeBody.cooktime %}
+                    | Cook: {{ recipe.RecipeBody.cooktime }} min
+                    {% endif %}
+                </div>
+                <span class="recipe-source {% if recipe.IsGlobal %}global{% else %}custom{% endif %}">
+                    {{ recipe.Source|upper }}
+                </span>
+                {% if user_is_admin %}
+                <button class="recipe-action-btn remove-btn"
+                        data-recipe-id="{{ recipe.RecipeID }}"
+                        data-recipe-name="{{ recipe.RecipeName }}"
+                        onclick="removeRecipeFromHousehold(event, this)">
+                    ✕ Remove
+                </button>
                 {% endif %}
-            </div>
-            <div class="recipe-meta">
-                {% if recipe.RecipeBody and recipe.RecipeBody.preptime %}
-                Prep: {{ recipe.RecipeBody.preptime }} min
-                {% endif %}
-                {% if recipe.RecipeBody and recipe.RecipeBody.cooktime %}
-                | Cook: {{ recipe.RecipeBody.cooktime }} min
-                {% endif %}
-            </div>
-            <span class="recipe-source {% if recipe.IsGlobal %}global{% else %}custom{% endif %}">
-                {{ recipe.Source|upper }}
-            </span>
-        </a>
+            </a>
+        </div>
         {% endfor %}
     </div>
     {% else %}
@@ -105,25 +115,55 @@
     {% if recommended_recipes %}
     <div class="carousel" id="recommended-recipes-carousel">
         {% for recipe in recommended_recipes %}
-        <a href="{{ url_for('recipes.recipe_detail', recipe_id=recipe.RecipeID) }}" class="recipe-card">
-            <h4>{{ recipe.RecipeName }}</h4>
-            <div class="recipe-meta">
-                {% if recipe.RecipeBody and recipe.RecipeBody.serves %}
-                Serves: {{ recipe.RecipeBody.serves }}
+        <div class="recipe-card-wrapper">
+            <a href="{{ url_for('recipes.recipe_detail', recipe_id=recipe.RecipeID) }}" class="recipe-card">
+                <h4>{{ recipe.RecipeName }}</h4>
+
+                {% if recipe_match_scores and recipe.RecipeID in recipe_match_scores %}
+                {% set match = recipe_match_scores[recipe.RecipeID] %}
+                <div class="pantry-match">
+                    <div class="match-bar-container">
+                        <div class="match-bar" style="width: {{ match.score }}%; background-color: {% if match.score >= 75 %}#4caf50{% elif match.score >= 50 %}#ff9800{% else %}#f44336{% endif %};"></div>
+                    </div>
+                    <div class="match-text">
+                        <span class="match-percentage">{{ match.score }}% match</span>
+                        <span class="match-ingredients">({{ match.matched }}/{{ match.total }} ingredients)</span>
+                    </div>
+                </div>
                 {% endif %}
-            </div>
-            <div class="recipe-meta">
-                {% if recipe.RecipeBody and recipe.RecipeBody.preptime %}
-                Prep: {{ recipe.RecipeBody.preptime }} min
+
+                <div class="recipe-meta">
+                    {% if recipe.RecipeBody and recipe.RecipeBody.serves %}
+                    Serves: {{ recipe.RecipeBody.serves }}
+                    {% endif %}
+                </div>
+                <div class="recipe-meta">
+                    {% if recipe.RecipeBody and recipe.RecipeBody.preptime %}
+                    Prep: {{ recipe.RecipeBody.preptime }} min
+                    {% endif %}
+                    {% if recipe.RecipeBody and recipe.RecipeBody.cooktime %}
+                    | Cook: {{ recipe.RecipeBody.cooktime }} min
+                    {% endif %}
+                </div>
+                <span class="recipe-source global">
+                    {{ recipe.Source|upper }}
+                </span>
+                {% if user_can_add_recipes %}
+                    {% if recipe.RecipeID in household_recipe_ids %}
+                    <button class="recipe-action-btn added-btn" disabled>
+                        ✓ In Household
+                    </button>
+                    {% else %}
+                    <button class="recipe-action-btn add-btn"
+                            data-recipe-id="{{ recipe.RecipeID }}"
+                            data-recipe-name="{{ recipe.RecipeName }}"
+                            onclick="addRecipeToHousehold(event, this)">
+                        + Add to Household
+                    </button>
+                    {% endif %}
                 {% endif %}
-                {% if recipe.RecipeBody and recipe.RecipeBody.cooktime %}
-                | Cook: {{ recipe.RecipeBody.cooktime }} min
-                {% endif %}
-            </div>
-            <span class="recipe-source global">
-                {{ recipe.Source|upper }}
-            </span>
-        </a>
+            </a>
+        </div>
         {% endfor %}
     </div>
     {% else %}
@@ -137,7 +177,7 @@
 function toggleExpanded(carouselId) {
     const carousel = document.getElementById(carouselId);
     const btn = carousel.parentElement.querySelector('.view-all-btn');
-    
+
     if (carousel.classList.contains('expanded')) {
         carousel.classList.remove('expanded');
         btn.classList.remove('expanded');
@@ -148,6 +188,163 @@ function toggleExpanded(carouselId) {
         btn.innerHTML = 'Show Less';
     }
 }
+
+async function addRecipeToHousehold(event, button) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const recipeId = button.dataset.recipeId;
+    const recipeName = button.dataset.recipeName;
+
+    // Disable button and show loading state
+    button.disabled = true;
+    button.textContent = 'Adding...';
+
+    try {
+        const response = await fetch(`/recipes/add_to_household/${recipeId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Update button to show it's added
+            button.textContent = '✓ In Household';
+            button.classList.remove('add-btn');
+            button.classList.add('added-btn');
+
+            // Show success message
+            showMessage(`"${recipeName}" added to household!`, 'success');
+
+            // Optionally reload page after a delay to show updated household recipes
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            // Show error message
+            showMessage(data.error || 'Failed to add recipe', 'error');
+            button.disabled = false;
+            button.textContent = '+ Add to Household';
+        }
+    } catch (error) {
+        console.error('Error adding recipe:', error);
+        showMessage('Failed to add recipe to household', 'error');
+        button.disabled = false;
+        button.textContent = '+ Add to Household';
+    }
+}
+
+async function removeRecipeFromHousehold(event, button) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const recipeId = button.dataset.recipeId;
+    const recipeName = button.dataset.recipeName;
+
+    // Confirm removal
+    if (!confirm(`Remove "${recipeName}" from this household?`)) {
+        return;
+    }
+
+    // Disable button and show loading state
+    button.disabled = true;
+    button.textContent = 'Removing...';
+
+    try {
+        const response = await fetch(`/recipes/remove_from_household/${recipeId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Show success message
+            showMessage(`"${recipeName}" removed from household`, 'success');
+
+            // Remove the recipe card from view with animation
+            const wrapper = button.closest('.recipe-card-wrapper');
+            wrapper.style.opacity = '0';
+            wrapper.style.transform = 'scale(0.9)';
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        } else {
+            // Show error message
+            showMessage(data.error || 'Failed to remove recipe', 'error');
+            button.disabled = false;
+            button.textContent = '✕ Remove';
+        }
+    } catch (error) {
+        console.error('Error removing recipe:', error);
+        showMessage('Failed to remove recipe from household', 'error');
+        button.disabled = false;
+        button.textContent = '✕ Remove';
+    }
+}
+
+function showMessage(message, type) {
+    // Create message element
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `flash-message flash-${type}`;
+    messageDiv.textContent = message;
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        border-radius: 4px;
+        background: ${type === 'success' ? '#4caf50' : '#f44336'};
+        color: white;
+        font-weight: 500;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10000;
+        animation: slideIn 0.3s ease-out;
+    `;
+
+    document.body.appendChild(messageDiv);
+
+    // Remove after 3 seconds
+    setTimeout(() => {
+        messageDiv.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => {
+            document.body.removeChild(messageDiv);
+        }, 300);
+    }, 3000);
+}
+
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
 </script>
 {% endblock %}
 

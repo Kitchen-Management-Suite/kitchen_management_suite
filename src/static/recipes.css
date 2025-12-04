@@ -87,6 +87,20 @@ button {
     overflow-x: visible;
 }
 
+/* Recipe Card Wrapper */
+.recipe-card-wrapper {
+    position: relative;
+    min-width: 250px;
+    max-width: 250px;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.carousel.expanded .recipe-card-wrapper {
+    max-width: none;
+    min-width: 0;
+    width: 100%;
+}
+
 /* Recipe Cards */
 .recipe-card {
     min-width: 250px;
@@ -280,6 +294,11 @@ button {
     color: var(--color-alert-success-text);
 }
 
+.status-partial {
+    background: #fff3e0;
+    color: #ff9800;
+}
+
 .status-unavailable {
     background: var(--color-alert-error-bg);
     color: var(--color-error);
@@ -324,6 +343,11 @@ button {
 
 .icon-available {
     background: var(--color-alert-success-text);
+    color: white;
+}
+
+.icon-partial {
+    background: #ff9800;
     color: white;
 }
 
@@ -460,5 +484,88 @@ button {
     font-size: 0.7rem;
     border-top: 4px solid black;
     margin-top: 0.25rem;
+}
+
+/* Pantry Match Indicator */
+.pantry-match {
+    margin: 0.75rem 0;
+    padding: 0.5rem 0;
+}
+
+.match-bar-container {
+    width: 100%;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.35rem;
+}
+
+.match-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.match-text {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+}
+
+.match-percentage {
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.match-ingredients {
+    color: var(--color-text-secondary);
+    font-size: 0.75rem;
+}
+
+/* Recipe Action Buttons */
+.recipe-action-btn {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 10;
+    white-space: nowrap;
+}
+
+.recipe-action-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.add-btn {
+    color: white;
+}
+
+.add-btn:hover:not(:disabled) {
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.remove-btn {
+    color: white;
+}
+
+.remove-btn:hover:not(:disabled) {
+    box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+}
+
+.added-btn {
+    background: #e0e0e0;
+    color: #666;
+    cursor: default;
+}
+
+/* Adjust recipe card padding to make room for button */
+.recipe-card-wrapper .recipe-card {
+    padding-bottom: 2.5rem;
 }
 
