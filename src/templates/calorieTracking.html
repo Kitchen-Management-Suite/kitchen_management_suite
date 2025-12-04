@@ -7,37 +7,75 @@
 {% endblock %}
 
 {% block content %}
-  <h2>{{ date }}</h2>
-  <h3>{{ dashBoardValues["Calories"] }} kCals</h3> 
-
-  <progress value="{{percentOfDailyGoal}}" max="1"> </progress>
-  <h3> Carbs: {{ dashBoardValues["Carbs"] }} Protein: {{ dashBoardValues["Protein"] }} Fat: {{ dashBoardValues["Fat"]}} </h3>
-  <p class="baseNutriInfo">This is Calorie Tracking Main Page</p>
-
-  <div> 
-    <h2 class="mealTypeHeader"> Breakfast </h2>
-    <button id="1" class="addMealBtn" MealType ="Breakfast" > AddMeal </button>
+  <div class = "dayMetaData">
+    <div class = dayMetaDataRow> 
+      <h2>{{ date }}</h2>
+      <h3 style="margin-left: auto;">{{ dashBoardValues["Calories"] }} | {{calorieGoal}} kCals</h3> 
+    </div>
+    <div class = "dayMetaDataRow"> 
+      <progress class = "progress-bar-modify" value="{{percentOfDailyGoal}}" max="1" style="width: 100%;"> </progress>
+    </div>
+    <div class = "dayMetaDataRow">
+      <div> 
+        <h3 class = "card-base carb-card"> Carbs: {{ dashBoardValues["Carbs"] | int }} </h3>
+        <h3 class = "card-base protein-card"> Protein: {{ dashBoardValues["Protein"] | int }} </h3>
+        <h3 class = "card-base fat-card">Fat: {{ dashBoardValues["Fat"] | int }} </h3> 
+      </div>
+      <div id="dropdownMenu" class = "dropdown">
+        <!-- TO DO NEXT, change the window. variable to meal type, set meal type as function of button -->
+        <!-- Set actino of form to go to the new link WITH the mealType -->
+        <button class="typeMealSelc">Breakfast</button>
+        <button class="typeMealSelc">AM-Snack</button>
+        <button id = "defMealType" class="typeMealSelc" >Lunch</button>
+        <button class="typeMealSelc">PM-Snack</button>
+        <button class="typeMealSelc">Dinner</button>
+      </div>
+    </div>
   </div>
 
-  <div>
-    <h2 class="mealTypeHeader"> Lunch </h2>
-    <button id="2" class="addMealBtn" MealType ="Lunch"> AddMeal </button>
-  </div>
 
-  <div>
-    <h2 class="mealTypeHeader"> Dinner </h2>
-    <button id="3" class="addMealBtn" MealType = "Dinner"> AddMeal </button>
-  </div>
+  <!-- <button type = "submit" class="addMealBtn" MealType ="Breakfast"> Add Meal</button> -->
+  <form id = "addFoodToLog" action = "/meal_item_search" style="margin-bottom: 1rem;" method = "POST">
+    <input type="hidden" name="MealType" value="Lunch">
+    <button type = "submit" class="addMealBtn" MealType ="Breakfast"> Add Meal</button>
+  </form>
+  
+    {% if groupedByMealType | length == 0%}
+      <div class = "errorCase"> 
+        <p> It looks like you haven't recorded any meals for today {insert funny emoji here} </p>
+      </div>
+    {% else %}
+      <div class = "itemDisplayContainer">
+        {% for mealType in orderOfMealType%}
+        <div> 
+          <h2 class = "meal-type-name-display"> {{mealType}}</h2>
+          <div class = holdsMealCards>
+            {% for value2 in groupedByMealType[mealType] %}
+              <div class = "mealCard">
+                <h4> {{value2.ItemName}}</h4>
+                <p class = "recipe-meta">Calories: {{value2.CaloriesConsumed}} </p>
+                <p class = "recipe-meta">Carbs: {{value2.Carbs}} </p>
+                <p class = "recipe-meta">Protein: {{value2.Protein}} </p>
+                <p class = "recipe-meta">Fat: {{value2.Fat}} </p>
+                <button class = "removeItem" id = {{value2.NutritionID}}> Remove </button>
+              </div>
+              <!-- <h3> {{value2}} </h3> -->
+            {% endfor %}
+          </div>
+          
+        </div>
+      {% endfor %}
+      </div>
+    {% endif%}
 
-  <div id="dropdownMenu" class="dropdown">
-    <a class="typeMealSelc" href="#">Choose From Recipe</a>
-    <a class="typeMealSelc" href="#">Make New Recipe</a>
-    <a class="typeMealSelc"  href="{{mealItemSearchUrl}}"> Other</a>
-  </div>
+<!-- mealItemSearchLink + `?MealType=${encodeURIComponent(button.getAttribute("MealType"))}`  </div> -->
 <!-- The href's here will dynamically change as the user selects a differnet button to pass the mealType-->
 
 {% endblock %}
 {% block extra_js %}
-  <script> window.mealItemSearchLink = "{{mealItemSearchUrl}}"</script> 
+  <script> 
+    window.mealTypeQuery = '?MealType=Lunch'
+    window.mealItemSearchLink = "{{mealItemSearchUrl}}"
+  </script> 
   <script defer src="{{ url_for('static', filename='calorieTrack.js') }}">  </script>
 {% endblock %}

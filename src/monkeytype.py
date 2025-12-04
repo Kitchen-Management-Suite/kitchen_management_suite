@@ -25,6 +25,7 @@ import tomli
 import json
 
 from faker import Faker
+from faker_food import FoodProvider
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import generate_password_hash
 
@@ -36,6 +37,7 @@ from db.schema import (
 )
 
 fake = Faker()
+fake.add_provider(FoodProvider)
 random.seed(2381)  # Deterministic for testing
 
 # Defaults
@@ -789,6 +791,8 @@ class UserGenerator:
                 
                 log = UserNutrition(
                     UserID=user.UserID,
+                    ItemName = fake.dish(),
+                    MealType = random.choice(["Breakfast","AM-Snack", "Lunch","PM-Snack", "Dinner"]),##FINISH
                     Date=date,
                     Time=meal_time,
                     CaloriesConsumed=calories,

@@ -23,6 +23,7 @@ from db.schema import user_nutrition, user_profile
 from sqlalchemy import and_, func
 from datetime import datetime
 from helpers.api_helper import searchByStr
+from collections import defaultdict
 
 sqlSession = get_session()
 flaskSession = session
@@ -36,7 +37,10 @@ def meal_item_search():
     if not session.get('logged_in'):
         flash('Please log in to track calories.', 'error')
         return redirect(url_for('auth.login'))
-    MealType = request.args.get("MealType")
+    MealType = request.form.get("MealType")
+    print(request.form)
+    print(request)
+    print("MEAL TYPE", MealType)
     return render_template("meal_item_search.html", MealType = MealType)
 
 #This endpoint is used to make the API call and redirct the user to the same html page with the searched content
@@ -77,6 +81,25 @@ def addToLog(UserNutrition):
     finally:
         sqlSession.close() 
 
+def removeFromLog(nutritionID):
+    try:
+        uN = user_nutrition.UserNutrition
+        obj = sqlSession.query(uN).filter(uN.NutritionID == nutritionID).first()
+        print("OBJECT", obj)
+        if obj:
+            sqlSession.delete(obj)
+            sqlSession.commit()
+            sqlSession.expire_all()
+            print("Deleted Item Successfully?")
+        else:
+            raise Exception(f"!!! COULD NOT FIND ITEM WITH NUTRITION ID: {nutritionID} !!!")
+    except Exception as ex:
+        sqlSession.rollback()
+        flash("Attemped to remove an item which does not exist", "error")
+        print("Error in session dumbass",ex)
+    finally:
+        sqlSession.close()
+
 #Default display page for calorie Tracking  
 @calorie_tracker_bp.route('/calorieTracking', methods = ["GET", "POST"])
 def calorieTracking():#KNOWN BUG - reloading this page after adding an item will add it to the database twice :/ fix later
@@ -89,14 +112,25 @@ def calorieTracking():#KNOWN BUG - reloading this page after adding an item will
     now = datetime.now() 
     date = now.date()
     time = now.time()
-    if request.method == "POST":##Handles route for when new food entry is added
+
+    print("REDIRECT",request)
+
+    if "RemoveID" in request.args:
+            nutritionID = request.args.get("RemoveID")
+            removeFromLog(nutritionID)
+            response = redirect('/calorieTracking')
+            print("RESPONSE", response)
+            return response
+            # print("DELETED", nutritionID)
+
+    if request.method == "POST":##Handles route for when new food entry is added or deleted    
         try:
             allItemData = request.form["itemName"]
             newNutritionEntry = user_nutrition.UserNutrition(
                 UserID = user_id,
                 Date = date,
                 Time = time,
-                # ItemName = request.form['itemName'],
+                ItemName = request.form['itemName'],
                 CaloriesConsumed = request.form["itemKCal"],
                 Protein = request.form["itemProtein"],
                 Carbs = request.form["itemCarbs"],
@@ -104,7 +138,7 @@ def calorieTracking():#KNOWN BUG - reloading this page after adding an item will
                 Fiber = request.form["itemFiber"],
                 Sugar = request.form["itemSugar"],
                 Sodium = request.form["itemSodium"],
-                # MealType = request.form["MealType"]
+                MealType = request.form["MealType"]
             )
             addToLog(newNutritionEntry)
         except Exception as ex:
@@ -117,6 +151,12 @@ def calorieTracking():#KNOWN BUG - reloading this page after adding an item will
         uP = user_profile.UserProfile
         nutritionData = sqlSession.query(nD).filter(nD.UserID == user_id).filter(nD.Date == date).all()
         userProfileData = sqlSession.query(uP).filter(uP.UserID == user_id).first()
+        
+        groupedByMealType = defaultdict(list)##This may not be the most efficent way to do this
+        for entry in nutritionData:#But for now it works 
+            groupedByMealType[entry.MealType].append(entry)
+        groupedByMealType = dict(groupedByMealType)
+
         if not len(nutritionData) == 0:
             for entry in nutritionData:
                 dashBoardValues["Calories"] += entry.CaloriesConsumed
@@ -138,14 +178,24 @@ def calorieTracking():#KNOWN BUG - reloading this page after adding an item will
         flash("Error in database query", "error")
         print("Error in database query")
         raise Exception(ex)
-        
+         
     if not nutritionData: 
         print("No User nutrition data retrieved")
-
+    print(type(groupedByMealType))
+    print(groupedByMealType)
     print(f"Loading User Daily Nutrition Values: {dashBoardValues}")
+    # groupedByMealType = dict()#Used for testing return of no values
+    print("SHOULD BE RENDERING?")
     return render_template('calorieTracking.html', 
                            dashBoardValues = dashBoardValues, 
                            date = date,
                            session = flaskSession, 
                            mealItemSearchUrl = "/meal_item_search",
-                           percentOfDailyGoal = percentOfDailyGoal)
+                           percentOfDailyGoal = percentOfDailyGoal,
+                           groupedByMealType = groupedByMealType,
+                           orderOfMealType = ["Breakfast", "AM-Snack", "Lunch", "PM-Snack", "Dinner"],
+                           calorieGoal = userProfileData.CalorieGoal)
+
+##TO DO 
+#Create front end rendering for items on display 
+#MAKE IT LOOK GOOD

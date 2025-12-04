@@ -60,6 +60,10 @@ if USDAApiKey == None:
 
 def searchByStr(searchText, **kwargs):#Will Need to sanitize search later#SUCH AS CHECK FOR EMPTY STRINGS, 
     #Emptry strings from openfoodfacts prevent writing to database
+    """
+    Searches by String in the open food facts data 
+    Check root/docs/api for more information
+    """
     url = "https://world.openfoodfacts.org/cgi/search.pl"
     defaultFields = ["generic_name_en", #Not implemented
                      "image_front_small_url",
@@ -72,7 +76,7 @@ def searchByStr(searchText, **kwargs):#Will Need to sanitize search later#SUCH A
         "search_simple": 1, 
         "json": 1,
         "page": kwargs.get("page", 1),
-        "page_size": kwargs.get("page_size", 100),
+        "page_size": kwargs.get("page_size", 10),
         "complete": 1,
         "country": "united-states"
         # "countries": "united-states"
@@ -97,6 +101,10 @@ def searchByCode(code, **kwargs):#Deprecated, need to change
         return -1
 
 def searchRawIngredient(name, **kwargs):
+    """
+    Searches by via String in the USAFood API 
+    Check root/docs/api for more information
+    """
     try: 
         url =  "https://api.nal.usda.gov/fdc/v1/foods/search"
         params = {
