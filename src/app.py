@@ -52,7 +52,7 @@ app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 # initialize database tables
 with app.app_context():
     print("initializing database...")
-    init_database()
+    init_database() if __name__ == "__main__" else print("Forgoing intization, app.py not being called to run")
 
 #Dstinguishing sessions for sqlAlchemy & flask 
 sqlSession = get_session()
@@ -694,11 +694,3 @@ def household_settings():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
-
-#To do 
-# Write api throttler for java
-# Write conditionals for loading calorite track page
-#Finish styling very basic search page
-# # Write the ability to pull in anything else necessary (recipies etc)
-# IF POSSIBLE allow selection of mulitple days
-# - This will require automatically checking and creating data for days that dont exist

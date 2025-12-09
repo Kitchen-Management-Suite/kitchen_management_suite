@@ -46,3 +46,7 @@ venv.bak/
 
 .claude
 migrations
+
+#sphinx generated documentation
+_build/
+generated/
