@@ -275,3 +275,151 @@ a {
 a:hover {
     text-decoration: none;
 }
+
+
+.settings-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.settings-container h1 {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--color-border);
+}
+
+.settings-section {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-bg-light);
+}
+
+.settings-section h2 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+}
+
+.settings-section h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+}
+
+.settings-content {
+    background: var(--color-white);
+    padding: 1.5rem;
+    border-radius: 4px;
+}
+
+.settings-form {
+    max-width: 100%;
+}
+
+.settings-form .form-group {
+    margin-bottom: 1rem;
+}
+
+.settings-form button[type="submit"] {
+    margin-top: 0.5rem;
+}
+
+.settings-divider {
+    height: 1px;
+    background: var(--color-border);
+    margin: 1.5rem 0;
+}
+
+/* Form hints */
+.form-hint {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+}
+
+/* Empty state message */
+.empty-message {
+    color: var(--color-text-secondary);
+    font-style: italic;
+}
+
+.warning-box {
+    background: var(--color-alert-warning-bg);
+    border-left: 4px solid var(--color-warning);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 4px;
+}
+
+.warning-box p {
+    margin: 0.5rem 0;
+    color: var(--color-alert-warning-text);
+}
+
+.warning-box p:first-child {
+    margin-top: 0;
+}
+
+.warning-box p:last-child {
+    margin-bottom: 0;
+}
+
+.settings-section.danger-section {
+    border-color: var(--color-error);
+    background: var(--color-error-bg);
+}
+
+.settings-section.danger-section h2 {
+    color: var(--color-error);
+}
+
+.settings-section.danger-section .settings-content {
+    background: var(--color-white);
+}
+
+.btn-danger {
+    padding: 0.6rem 1.2rem;
+    background-color: var(--color-error);
+    color: var(--color-white);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background 0.2s;
+    width: auto;
+}
+
+.btn-danger:hover {
+    background-color: #a00;
+}
+
+.btn-danger:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.info-box {
+    background: var(--color-info-bg);
+    border-left: 4px solid var(--color-info);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 4px;
+}
+
+.info-box h4 {
+    margin-top: 0;
+    color: var(--color-info);
+}
+
+.info-box p {
+    margin: 0.5rem 0;
+}
+
+.info-box p:last-child {
+    margin-bottom: 0;
+}

@@ -41,6 +41,7 @@ class User(Base):
     members = relationship("Member", back_populates="user")
     adds = relationship("Adds", back_populates="user")
     authors = relationship("Authors", back_populates="user")
+    join_requests = relationship("JoinRequest", back_populates="user", cascade="all, delete-orphan")
     
     households = relationship("Household", secondary="Members", viewonly=True)
     items = relationship("Item", secondary="Adds", viewonly=True)

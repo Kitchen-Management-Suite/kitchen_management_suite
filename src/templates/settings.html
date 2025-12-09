@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}KMS | Settings{% endblock %}
+
+{% block content %}
+<div id="settings-root"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    window.settingsData = {
+        userData: {{ user_data | tojson }},
+        profileData: {{ profile_data | tojson }},
+        households: {{ user_households | tojson }}
+    };
+</script>
+<script type="module">
+    import { initSettings } from "{{ url_for('static', filename='settings.js') }}";
+    initSettings('settings-root', window.settingsData);
+</script>
+{% endblock %}

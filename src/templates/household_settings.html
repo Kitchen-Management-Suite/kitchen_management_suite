@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}KMS | Household Settings{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='household.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='modal.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="household-settings-container">
+    <h1>Household Settings</h1>
+    
+    {% if household %}
+    <div class="settings-header">
+        <p class="household-name-display">Managing: <strong>{{ household.HouseholdName }}</strong></p>
+        <p class="role-badge">Your role: {{ user_role }}</p>
+    </div>
+
+    <!-- Household Name Section -->
+    <section class="settings-section">
+        <h2>Household Information</h2>
+        <div class="settings-content">
+            <form method="POST" action="{{ url_for('settings.rename_household') }}" class="settings-form">
+                <div class="form-group">
+                    <label for="household_name">Household Name</label>
+                    <input type="text" 
+                           name="household_name" 
+                           id="household_name" 
+                           class="form-input" 
+                           value="{{ household.HouseholdName }}"
+                           maxlength="100"
+                           required>
+                    <small class="form-hint">Choose a unique name for your household (max 100 characters)</small>
+                </div>
+                <button type="submit" class="btn-primary">Update Name</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Members Section -->
+    <section class="settings-section">
+        <h2>Members ({{ members|length }})</h2>
+        <div class="settings-content">
+            <p class="section-description">Manage household members and their roles. Owners have full control, Members can add items and view content.</p>
+            
+            <div class="members-list">
+                {% for member in members %}
+                <div class="member-card {% if member.is_current_user %}current-user{% endif %}">
+                    <div class="member-info">
+                        <div class="member-name">
+                            {{ member.username }}
+                            {% if member.first_name or member.last_name %}
+                            <span class="member-fullname">({{ member.first_name }} {{ member.last_name }})</span>
+                            {% endif %}
+                            {% if member.is_current_user %}
+                            <span class="you-badge">You</span>
+                            {% endif %}
+                        </div>
+                        {% if member.email %}
+                        <div class="member-email">{{ member.email }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="member-actions">
+                        {% if not member.is_current_user %}
+                        <!-- Role Change Form -->
+                        <form method="POST" action="{{ url_for('settings.change_member_role') }}" class="role-form">
+                            <input type="hidden" name="member_id" value="{{ member.member_id }}">
+                            <select name="role_id" class="form-select role-select" onchange="this.form.submit()">
+                                {% for role in roles %}
+                                <option value="{{ role.id }}" {% if role.name == member.role %}selected{% endif %}>
+                                    {{ role.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                        
+                        <!-- Remove Member Form -->
+                        <form method="POST" action="{{ url_for('settings.remove_member') }}" class="remove-form" 
+                              onsubmit="return confirm('Are you sure you want to remove {{ member.username }} from this household?')">
+                            <input type="hidden" name="member_id" value="{{ member.member_id }}">
+                            <button type="submit" class="btn-remove-member" title="Remove member">X</button>
+                        </form>
+                        {% else %}
+                        <span class="role-display">{{ member.role }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="info-box">
+                <p><strong>Tip:</strong> To add new members, have them join using your household name: <code>{{ household.HouseholdName }}</code></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pantry Management Section -->
+    <section class="settings-section">
+        <h2>Pantry Management</h2>
+        <div class="settings-content">
+            <div class="pantry-stats">
+                <p>Current pantry contains <strong>{{ pantry_item_count }}</strong> item record(s).</p>
+            </div>
+            
+            <div class="warning-box">
+                <p><strong>Warning:</strong> Resetting the pantry will permanently delete all items. This action cannot be undone.</p>
+            </div>
+            
+            <form method="POST" action="{{ url_for('settings.reset_pantry') }}" class="settings-form">
+                <div class="form-group">
+                    <label for="confirm_reset">Type RESET to confirm</label>
+                    <input type="text" 
+                           name="confirm_reset" 
+                           id="confirm_reset" 
+                           class="form-input"
+                           placeholder="RESET"
+                           autocomplete="off">
+                </div>
+                <button type="submit" class="btn-warning">Reset Pantry</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Transfer Ownership (informational) -->
+    <section class="settings-section">
+        <h2>Transfer Ownership</h2>
+        <div class="settings-content">
+            <p>To transfer ownership of this household:</p>
+            <ol class="instruction-list">
+                <li>Change another member's role to "Owner" using the members list above</li>
+                <li>The new Owner will have full administrative access</li>
+                <li>You can then optionally change your own role or leave the household</li>
+            </ol>
+            <p class="note">Note: A household must always have at least one Owner.</p>
+        </div>
+    </section>
+
+    <!-- Danger Zone -->
+    <section class="settings-section danger-section">
+        <h2>Danger Zone</h2>
+        <div class="settings-content">
+            <div class="danger-action">
+                <div class="danger-info">
+                    <h3>Delete Household</h3>
+                    <p>Permanently delete this household and all its data including pantry items, recipe associations, and member records. All members will be removed.</p>
+                </div>
+                
+                <form method="POST" action="{{ url_for('settings.delete_household') }}" class="settings-form danger-form">
+                    <div class="form-group">
+                        <label for="confirm_delete">Type DELETE to confirm</label>
+                        <input type="text" 
+                               name="confirm_delete" 
+                               id="confirm_delete" 
+                               class="form-input"
+                               placeholder="DELETE"
+                               autocomplete="off">
+                    </div>
+                    <button type="submit" class="btn-danger">Delete Household</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    {% else %}
+    <div class="error-state">
+        <p>No household selected or household not found.</p>
+        <a href="{{ url_for('manage_household') }}" class="btn-primary">Manage Households</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
